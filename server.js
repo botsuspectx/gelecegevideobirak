@@ -1,4 +1,3 @@
-
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -8,17 +7,15 @@ const { uploadToDrive } = require("./googleDriveUploader");
 
 const app = express();
 
+// 🌐 PORT tanımı burada olmalı
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Bu satır şart! ✅
+// ✅ Sadece public klasörü statik sunulsun
 app.use(express.static(path.join(__dirname, "public")));
-
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
 
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -145,9 +142,6 @@ app.post("/admin-login", (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
-});
 app.delete("/veriler/:timestamp", (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
@@ -164,3 +158,7 @@ app.delete("/veriler/:timestamp", (req, res) => {
   res.json({ success: true });
 });
 
+// 🔥 GÜNCELLENMİŞ PORT SATIRI
+app.listen(PORT, () => {
+  console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
+});
