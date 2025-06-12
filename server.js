@@ -7,7 +7,13 @@ const path = require("path");
 const { uploadToDrive } = require("./googleDriveUploader");
 
 const app = express();
-const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Bu satır şart! ✅
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cors());
 app.use(express.json());
