@@ -6,15 +6,12 @@ const path = require("path");
 const { uploadToDrive } = require("./googleDriveUploader");
 
 const app = express();
-
-// 🌐 PORT tanımı burada olmalı
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Sadece public klasörü statik sunulsun
 app.use(express.static(path.join(__dirname, "public")));
 
 const uploadDir = path.join(__dirname, "uploads");
@@ -158,7 +155,11 @@ app.delete("/veriler/:timestamp", (req, res) => {
   res.json({ success: true });
 });
 
-// 🔥 GÜNCELLENMİŞ PORT SATIRI
+// ✅ Google OAuth dönüş adresi
+app.get("/oauth2callback", (req, res) => {
+  res.send("✅ Yetkilendirme başarılı! Terminalde token.json oluşmuş olmalı.");
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
 });
