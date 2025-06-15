@@ -18,8 +18,9 @@ if (fs.existsSync(TOKEN_PATH)) {
   const token = JSON.parse(fs.readFileSync(TOKEN_PATH));
   oAuth2Client.setCredentials(token);
 } else {
-  throw new Error("❌ token.json bulunamadı. Yetkilendirme yapılmalı.");
+  console.warn("⚠️ token.json bulunamadı. İlk yetkilendirme yapılmalı. Sunucu çalışmaya devam ediyor...");
 }
+
 
 const drive = google.drive({ version: "v3", auth: oAuth2Client });
 
