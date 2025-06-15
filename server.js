@@ -144,6 +144,13 @@ app.get("/oauth2callback", async (req, res) => {
     res.send("❌ Token alınamadı: " + err.message);
   }
 });
+const tokenPath = path.join(__dirname, "token.json");
+if (fs.existsSync(tokenPath)) {
+  console.log("✅ token.json dosyası mevcut:", tokenPath);
+} else {
+  console.log("❌ token.json dosyası bulunamadı.");
+}
+
 
 
 app.listen(PORT, () => {
