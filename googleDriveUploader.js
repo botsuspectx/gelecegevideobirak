@@ -1,6 +1,8 @@
 // Placeholder for Google Drive uploadconst fs = require("fs");
 const path = require("path");
 const { google } = require("googleapis");
+const fs = require("fs");
+
 
 // credentials.json dosyasını oku
 const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
