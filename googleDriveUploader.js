@@ -54,4 +54,3 @@ async function uploadToDrive(filepath, filename) {
 }
 
 module.exports = { uploadToDrive };
-er
