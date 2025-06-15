@@ -125,9 +125,10 @@
     }
 
     function showVideo(filename) {
-  if (!filename) return alert("Video dosyası bulunamadı.");
-  window.open(`/uploads/${filename}`, "_blank");
-}
+        if (!filename) return alert("Video dosyası bulunamadı.");
+      const url = filename.startsWith("http") ? filename : `/uploads/${filename}`;
+      window.open(url, "_blank");
+    }
 
     document.getElementById("search").addEventListener("input", function () {
       const keyword = this.value.toLowerCase();
