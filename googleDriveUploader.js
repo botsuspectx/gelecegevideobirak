@@ -10,7 +10,7 @@ const TOKEN_PATH = "/etc/secrets/token.json";
 const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
 
 // OAuth2 istemcisi oluştur
-const { client_secret, client_id, redirect_uris } = credentials.installed;
+const { client_secret, client_id, redirect_uris } = credentials.web;
 const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
 // token.json içeriğini oku ve yetkilendir
