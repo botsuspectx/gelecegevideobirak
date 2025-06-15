@@ -1,4 +1,3 @@
-// Placeholder for Google Drive uploadconst fs = require("fs");
 const path = require("path");
 const { google } = require("googleapis");
 const fs = require("fs");
