@@ -68,6 +68,7 @@
       })
       .then(res => {
         if (res.ok) {
+          localStorage.setItem("admin_token", "giris_basarili");
           window.location.href = "admin.html";
         } else {
           document.getElementById("error").textContent = "❌ Hatalı şifre!";
@@ -83,6 +84,13 @@
     }
   });
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      if (localStorage.getItem("admin_token") !== "giris_basarili") {
+        alert("⛔ Yetkisiz giriş! Lütfen tekrar giriş yapın.");
+        window.location.href = "admin-login.html";
+      }
+    });
   </script>
 </body>
 </html>
