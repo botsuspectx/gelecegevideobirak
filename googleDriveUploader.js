@@ -3,7 +3,6 @@ const { google } = require("googleapis");
 const fs = require("fs");
 
 // ✅ Render'da Secret Files olarak yüklenen dosyaların yolları
-const CREDENTIALS_PATH = "/etc/secrets/credentials.json";
 const TOKEN_PATH = path.join(__dirname, "token.json");
 
 // credentials.json içeriğini oku
