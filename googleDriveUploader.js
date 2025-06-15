@@ -6,6 +6,7 @@ const fs = require("fs");
 const TOKEN_PATH = path.join(__dirname, "token.json");
 
 // credentials.json içeriğini oku
+const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
 const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
 
 // OAuth2 istemcisi oluştur
