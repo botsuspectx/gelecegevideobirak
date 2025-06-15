@@ -2,34 +2,32 @@ const path = require("path");
 const { google } = require("googleapis");
 const fs = require("fs");
 
-
-// credentials.json dosyasını oku
+// ✅ Render'da Secret Files olarak yüklenen dosyaların yolları
 const CREDENTIALS_PATH = "/etc/secrets/credentials.json";
-const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
 const TOKEN_PATH = "/etc/secrets/token.json";
 
+// credentials.json içeriğini oku
+const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
 
 // OAuth2 istemcisi oluştur
 const { client_secret, client_id, redirect_uris } = credentials.installed;
 const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
-// Daha önce alınmış token'ı oku
-const TOKEN_PATH = path.join(__dirname, "token.json");
-
+// token.json içeriğini oku ve yetkilendir
 if (fs.existsSync(TOKEN_PATH)) {
   const token = JSON.parse(fs.readFileSync(TOKEN_PATH));
   oAuth2Client.setCredentials(token);
 } else {
-  throw new Error("token.json bulunamadı. Yetkilendirme yapılmalı.");
+  throw new Error("❌ token.json bulunamadı. Yetkilendirme yapılmalı.");
 }
 
 const drive = google.drive({ version: "v3", auth: oAuth2Client });
 
-// ASIL FONKSİYON
+// 🚀 ASIL YÜKLEME FONKSİYONU
 async function uploadToDrive(filepath, filename) {
   const fileMetadata = {
     name: filename,
-    parents: ["root"] // istersen klasör ID’si koyabilirsin
+    parents: ["root"] // klasör ID belirtilebilir
   };
   const media = {
     mimeType: "video/mp4",
@@ -43,7 +41,7 @@ async function uploadToDrive(filepath, filename) {
 
   const fileId = res.data.id;
 
-  // Paylaşılabilir hale getir
+  // Linki herkesle paylaşılabilir yap
   await drive.permissions.create({
     fileId,
     requestBody: {
