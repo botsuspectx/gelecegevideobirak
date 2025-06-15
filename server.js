@@ -133,17 +133,18 @@ app.get("/oauth2callback", async (req, res) => {
     const TOKEN_PATH = "/etc/secrets/token.json";
     const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
     const { client_secret, client_id, redirect_uris } = credentials.web;
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-    res.send("✅ Token başarıyla alındı ve kayıt edildi.");
+    res.send("✅ Token başarıyla alındı ve kaydedildi!");
   } catch (err) {
-    console.error("❌ Token alma hatası:", err);
-    res.send("❌ Token alınamadı.");
+    console.error("❌ Token alma hatası:", err.message);
+    res.send("❌ Token alınamadı: " + err.message);
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
