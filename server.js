@@ -130,7 +130,7 @@ app.get("/oauth2callback", async (req, res) => {
 
   try {
     const CREDENTIALS_PATH = "/etc/secrets/credentials.json";
-    const TOKEN_PATH = "/etc/secrets/token.json";
+    const TOKEN_PATH = path.join(__dirname, "token.json");
     const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
     const { client_secret, client_id, redirect_uris } = credentials.web;
 
