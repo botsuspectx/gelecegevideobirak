@@ -137,15 +137,30 @@
       });
     }
 
-    function deleteData(timestamp) {
-      if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+function deleteData(timestamp) {
+  if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
 
-      fetch(`/veriler/${timestamp}`, { method: "DELETE" })
-        .then(res => res.json())
-        .then(() => {
-          fetchData();
-        });
+  fetch(`/veriler/${timestamp}`, {
+    method: "DELETE",
+    credentials: "include"
+  })
+  .then(res => {
+    if (!res.ok) {
+      return res.text().then(msg => {
+        alert("❌ Silme başarısız: " + msg);
+        throw new Error(msg);
+      });
     }
+    return res.json();
+  })
+  .then(() => {
+    fetchData();
+  })
+  .catch(err => {
+    console.error("❌ Silme hatası:", err);
+  });
+}
+
 
     function showVideo(filename) {
       if (!filename) return alert("Video dosyası bulunamadı.");
