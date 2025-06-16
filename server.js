@@ -148,7 +148,6 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const itemToDelete = data.find(item => item.timestamp === req.params.timestamp);
   if (!itemToDelete) return res.status(404).json({ success: false });
 
-  // 🎯 Drive dosya ID’sini linkten ayıkla
   const match = itemToDelete.videoFilename.match(/\/d\/(.+?)\//);
   if (match && match[1]) {
     const fileId = match[1];
@@ -159,13 +158,6 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
       console.error("❌ Drive silme hatası:", err);
     }
   }
-
-  const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
-  fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
-
-  res.json({ success: true });
-});
-
 
   const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
   fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
