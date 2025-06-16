@@ -140,7 +140,7 @@ app.get("/veriler", authMiddleware, (req, res) => {
 });
 
 // Kayıt ve Drive videosunu sil (JWT korumalı)
-app.delete("/veriler/:timestamp", authMiddleware, (req, res) => {
+app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
 
@@ -152,8 +152,20 @@ app.delete("/veriler/:timestamp", authMiddleware, (req, res) => {
   const match = itemToDelete.videoFilename.match(/\/d\/(.+?)\//);
   if (match && match[1]) {
     const fileId = match[1];
-    deleteFromDrive(fileId);
+    try {
+      await deleteFromDrive(fileId);
+      console.log("🗑 Drive dosyası silindi:", fileId);
+    } catch (err) {
+      console.error("❌ Drive silme hatası:", err);
+    }
   }
+
+  const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
+  fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
+
+  res.json({ success: true });
+});
+
 
   const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
   fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
