@@ -78,6 +78,12 @@
   </table>
 
   <script>
+    // ⛔ Admin giriş kontrolü
+    if (localStorage.getItem("admin_token") !== "giris_basarili") {
+      alert("⛔ Yetkisiz giriş! Lütfen tekrar giriş yapın.");
+      window.location.href = "admin-login.html";
+    }
+
     let allData = [];
 
     function fetchData() {
@@ -125,7 +131,7 @@
     }
 
     function showVideo(filename) {
-        if (!filename) return alert("Video dosyası bulunamadı.");
+      if (!filename) return alert("Video dosyası bulunamadı.");
       const url = filename.startsWith("http") ? filename : `/uploads/${filename}`;
       window.open(url, "_blank");
     }
