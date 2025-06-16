@@ -77,20 +77,7 @@
       .catch(() => {
         document.getElementById("error").textContent = "Sunucuya ulaşılamadı.";
       });
-        document.addEventListener("DOMContentLoaded", function () {
-    if (localStorage.getItem("admin_token") !== "giris_basarili") {
-      alert("⛔ Yetkisiz giriş! Lütfen tekrar giriş yapın.");
-      window.location.href = "admin-login.html";
     }
-  });
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      if (localStorage.getItem("admin_token") !== "giris_basarili") {
-        alert("⛔ Yetkisiz giriş! Lütfen tekrar giriş yapın.");
-        window.location.href = "admin-login.html";
-      }
-    });
   </script>
 </body>
 </html>
