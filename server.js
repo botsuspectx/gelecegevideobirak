@@ -131,7 +131,7 @@ app.get("/oauth2callback", async (req, res) => {
   try {
     // ✅ EKLE: credentials yolunu tanımla
     const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
-    const TOKEN_PATH = path.join(__dirname, "token.json");
+    const TOKEN_PATH = "/etc/secrets/token.json";
 
     const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
     const { client_secret, client_id, redirect_uris } = credentials.web;
@@ -148,7 +148,7 @@ app.get("/oauth2callback", async (req, res) => {
   }
 });
 
-const tokenPath = path.join(__dirname, "token.json");
+const TOKEN_PATH = "/etc/secrets/token.json";
 if (fs.existsSync(tokenPath)) {
   console.log("✅ token.json dosyası mevcut:", tokenPath);
 } else {
