@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
-const { uploadToDrive } = require("./googleDriveUploader");
+const { uploadToDrive, deleteFromDrive } = require("./googleDriveUploader");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -131,7 +131,7 @@ app.post("/save", (req, res) => {
   res.json({ success: true });
 });
 
-// Admin panel verileri (JWT korumalı)
+// Verileri listele (JWT korumalı)
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -139,15 +139,25 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
+// Kayıt ve Drive videosunu sil (JWT korumalı)
 app.delete("/veriler/:timestamp", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
 
   const data = JSON.parse(fs.readFileSync(dbPath));
-  const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
-  if (data.length === yeniVeri.length) return res.status(404).json({ success: false });
+  const itemToDelete = data.find(item => item.timestamp === req.params.timestamp);
+  if (!itemToDelete) return res.status(404).json({ success: false });
 
+  // 🎯 Drive dosya ID’sini linkten ayıkla
+  const match = itemToDelete.videoFilename.match(/\/d\/(.+?)\//);
+  if (match && match[1]) {
+    const fileId = match[1];
+    deleteFromDrive(fileId);
+  }
+
+  const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
   fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
+
   res.json({ success: true });
 });
 
