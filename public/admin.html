@@ -57,6 +57,12 @@
 </head>
 <body>
   <h2>📂 Admin Paneli</h2>
+  <div style="text-align: center; margin-bottom: 20px;">
+    <button onclick="logout()" style="background-color: #999; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+      Çıkış Yap
+    </button>
+  </div>
+
   <input type="text" id="search" placeholder="İsim, e-posta, telefon ara..." />
 
   <table>
@@ -78,19 +84,30 @@
   </table>
 
   <script>
-    // ⛔ Admin giriş kontrolü
-    if (localStorage.getItem("admin_token") !== "giris_basarili") {
-      alert("⛔ Yetkisiz giriş! Lütfen tekrar giriş yapın.");
-      window.location.href = "admin-login.html";
+    function logout() {
+      fetch("/admin-logout", {
+        method: "POST"
+      })
+      .then(() => {
+        window.location.href = "admin-login.html";
+      })
+      .catch(() => {
+        alert("❌ Çıkış yapılamadı.");
+      });
     }
 
     let allData = [];
 
     function fetchData() {
       fetch("/veriler")
-        .then(res => res.json())
+        .then(res => {
+          if (res.status === 403) {
+            alert("⛔ Oturum süresi dolmuş. Lütfen tekrar giriş yapın.");
+            window.location.href = "admin-login.html";
+          }
+          return res.json();
+        })
         .then(data => {
-          console.log("Gelen veri:", data);
           allData = data;
           displayData(data);
         });
