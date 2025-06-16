@@ -3,15 +3,18 @@ const multer = require("multer");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const { google } = require("googleapis");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const { uploadToDrive } = require("./googleDriveUploader");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "gizliAnahtar123";
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 const uploadDir = path.join(__dirname, "uploads");
@@ -27,17 +30,53 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
-
 app.use("/uploads", express.static(uploadDir));
 
-// 📥 Video gönderme işlemi
+// JWT kontrol middleware
+function authMiddleware(req, res, next) {
+  const token = req.cookies.admin_token;
+  if (!token) return res.status(403).send("⛔ Giriş gerekli");
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role === "admin") return next();
+    return res.status(403).send("⛔ Yetkisiz");
+  } catch {
+    return res.status(403).send("⛔ Token geçersiz");
+  }
+}
+
+// JWT ile giriş yap
+app.post("/admin-login", (req, res) => {
+  const { password } = req.body;
+  const correctPassword = "1234";
+
+  if (password === correctPassword) {
+    const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "1h" });
+    res.cookie("admin_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, message: "Hatalı şifre" });
+  }
+});
+
+// Çıkış yap
+app.post("/admin-logout", (req, res) => {
+  res.clearCookie("admin_token");
+  res.json({ success: true });
+});
+
+// Video gönderimi
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   if (!video) return res.status(400).json({ success: false, error: "Video yüklenemedi." });
 
   try {
     const driveLink = await uploadToDrive(video.path, video.originalname);
-    fs.unlink(video.path, () => {}); // geçici dosyayı sil
+    fs.unlink(video.path, () => {});
 
     const sizeMB = video.size / (1024 * 1024);
     const price = sizeMB <= 5 ? 0 :
@@ -59,7 +98,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
-// 💾 Veritabanına kayıt
+// Kayıt işlemi
 app.post("/save", (req, res) => {
   const {
     fullname,
@@ -92,21 +131,15 @@ app.post("/save", (req, res) => {
   res.json({ success: true });
 });
 
-app.get("/veriler", (req, res) => {
+// Admin panel verileri (JWT korumalı)
+app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
   const data = JSON.parse(fs.readFileSync(dbPath));
   res.json(data);
 });
 
-app.post("/admin-login", (req, res) => {
-  const { password } = req.body;
-  const correctPassword = "1234";
-  if (password === correctPassword) res.json({ success: true });
-  else res.status(401).json({ success: false, message: "Hatalı şifre" });
-});
-
-app.delete("/veriler/:timestamp", (req, res) => {
+app.delete("/veriler/:timestamp", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
 
@@ -117,14 +150,6 @@ app.delete("/veriler/:timestamp", (req, res) => {
   fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
   res.json({ success: true });
 });
-
-// 🔍 TOKEN dosyası Render'da doğru yerde mi kontrolü
-const tokenPath = "/etc/secrets/token.json";
-if (fs.existsSync(tokenPath)) {
-  console.log("✅ token.json dosyası bulundu:", tokenPath);
-} else {
-  console.warn("⚠️ token.json bulunamadı! Google Drive erişimi başarısız olabilir.");
-}
 
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
