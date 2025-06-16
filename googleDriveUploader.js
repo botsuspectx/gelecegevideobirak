@@ -53,6 +53,20 @@ async function uploadToDrive(filepath, filename) {
         type: "anyone",
       },
     });
+    async function deleteFromDrive(fileId) {
+  try {
+    await drive.files.delete({ fileId });
+    console.log(`🗑 Drive dosyası silindi: ${fileId}`);
+  } catch (err) {
+    console.error("❌ Drive silme hatası:", err.message);
+  }
+}
+
+module.exports = {
+  uploadToDrive,
+  deleteFromDrive
+};
+
 
     const publicLink = `https://drive.google.com/file/d/${fileId}/view`;
     return publicLink;
