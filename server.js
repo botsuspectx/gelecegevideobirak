@@ -129,13 +129,17 @@ app.get("/oauth2callback", async (req, res) => {
   if (!code) return res.send("❌ Kod alınamadı.");
 
   try {
+    // ✅ EKLE: credentials yolunu tanımla
+    const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
     const TOKEN_PATH = path.join(__dirname, "token.json");
+
     const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
     const { client_secret, client_id, redirect_uris } = credentials.web;
 
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
     const { tokens } = await oAuth2Client.getToken(code);
     oAuth2Client.setCredentials(tokens);
+
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
     res.send("✅ Token başarıyla alındı ve kaydedildi!");
   } catch (err) {
@@ -143,6 +147,7 @@ app.get("/oauth2callback", async (req, res) => {
     res.send("❌ Token alınamadı: " + err.message);
   }
 });
+
 const tokenPath = path.join(__dirname, "token.json");
 if (fs.existsSync(tokenPath)) {
   console.log("✅ token.json dosyası mevcut:", tokenPath);
