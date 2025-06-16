@@ -15,15 +15,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => {
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 10);
     const ext = path.extname(file.originalname);
@@ -39,29 +35,28 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   if (!video) return res.status(400).json({ success: false, error: "Video yüklenemedi." });
 
-  let driveLink = "";
   try {
-    driveLink = await uploadToDrive(video.path, video.originalname);
-    fs.unlink(video.path, () => {});
+    const driveLink = await uploadToDrive(video.path, video.originalname);
+    fs.unlink(video.path, () => {}); // geçici dosyayı sil
+
+    const sizeMB = video.size / (1024 * 1024);
+    const price = sizeMB <= 5 ? 0 :
+                  sizeMB <= 20 ? 10 :
+                  sizeMB <= 50 ? 20 :
+                  sizeMB <= 100 ? 30 :
+                  sizeMB <= 500 ? 40 :
+                  sizeMB <= 1024 ? 50 : 200;
+
+    return res.json({
+      success: true,
+      videoFilename: driveLink,
+      sizeMB: sizeMB.toFixed(2),
+      price,
+    });
   } catch (err) {
     console.error("❌ Drive yükleme hatası:", err);
     return res.status(500).json({ success: false, error: "Drive yüklenemedi." });
   }
-
-  const sizeMB = video.size / (1024 * 1024);
-  const price = sizeMB <= 5 ? 0 :
-                sizeMB <= 20 ? 10 :
-                sizeMB <= 50 ? 20 :
-                sizeMB <= 100 ? 30 :
-                sizeMB <= 500 ? 40 :
-                sizeMB <= 1024 ? 50 : 200;
-
-  res.json({
-    success: true,
-    videoFilename: driveLink,
-    sizeMB: sizeMB.toFixed(2),
-    price
-  });
 });
 
 // 💾 Veritabanına kayıt
@@ -86,7 +81,7 @@ app.post("/save", (req, res) => {
     sizeMB,
     price,
     videoFilename,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
   const dbPath = path.join(__dirname, "veriler.json");
@@ -123,39 +118,13 @@ app.delete("/veriler/:timestamp", (req, res) => {
   res.json({ success: true });
 });
 
-// ✅ Google OAuth 2.0 Yetki Dönüş Noktası
-app.get("/oauth2callback", async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.send("❌ Kod alınamadı.");
-
-  try {
-    // ✅ EKLE: credentials yolunu tanımla
-    const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
-    const TOKEN_PATH = "/etc/secrets/token.json";
-
-    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
-    const { client_secret, client_id, redirect_uris } = credentials.web;
-
-    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-    const { tokens } = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(tokens);
-
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens));
-    res.send("✅ Token başarıyla alındı ve kaydedildi!");
-  } catch (err) {
-    console.error("❌ Token alma hatası:", err.message);
-    res.send("❌ Token alınamadı: " + err.message);
-  }
-});
-
-const TOKEN_PATH = "/etc/secrets/token.json";
+// 🔍 TOKEN dosyası Render'da doğru yerde mi kontrolü
+const tokenPath = "/etc/secrets/token.json";
 if (fs.existsSync(tokenPath)) {
-  console.log("✅ token.json dosyası mevcut:", tokenPath);
+  console.log("✅ token.json dosyası bulundu:", tokenPath);
 } else {
-  console.log("❌ token.json dosyası bulunamadı.");
+  console.warn("⚠️ token.json bulunamadı! Google Drive erişimi başarısız olabilir.");
 }
-
-
 
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
