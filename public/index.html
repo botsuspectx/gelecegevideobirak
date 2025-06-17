@@ -139,7 +139,8 @@
         localStorage.setItem("deliveryDate", form.deliveryDate.value);
         localStorage.setItem("sizeMB", result.sizeMB);
         localStorage.setItem("price", result.price);
-        localStorage.setItem("videoFilename", result.videoFilename);
+        localStorage.setItem("tempFilename", result.tempFilename); // 🔧 bu satır önemli
+
 
         console.log("✅ Yönlendirme başlıyor...");
         window.location.href = "preview.html";
