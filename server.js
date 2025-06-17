@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -10,6 +11,7 @@ const { uploadToDrive, deleteFromDrive } = require("./googleDriveUploader");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "gizliAnahtar123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 app.use(cors());
 app.use(express.json());
@@ -32,7 +34,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 app.use("/uploads", express.static(uploadDir));
 
-// JWT kontrol middleware
+// ✅ JWT kontrol middleware
 function authMiddleware(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) return res.status(403).send("⛔ Giriş gerekli");
@@ -45,12 +47,10 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// JWT ile giriş yap
+// ✅ Admin girişi (şifre .env üzerinden)
 app.post("/admin-login", (req, res) => {
   const { password } = req.body;
-  const correctPassword = "1234";
-
-  if (password === correctPassword) {
+  if (password === ADMIN_PASSWORD) {
     const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "1h" });
     res.cookie("admin_token", token, {
       httpOnly: true,
@@ -63,13 +63,13 @@ app.post("/admin-login", (req, res) => {
   }
 });
 
-// Çıkış yap
+// ✅ Çıkış
 app.post("/admin-logout", (req, res) => {
   res.clearCookie("admin_token");
   res.json({ success: true });
 });
 
-// Video gönderimi
+// ✅ Video gönderimi
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   if (!video) return res.status(400).json({ success: false, error: "Video yüklenemedi." });
@@ -98,7 +98,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
-// Kayıt işlemi
+// ✅ Kayıt veritabanına yaz
 app.post("/save", (req, res) => {
   const {
     fullname,
@@ -131,7 +131,7 @@ app.post("/save", (req, res) => {
   res.json({ success: true });
 });
 
-// Verileri listele (JWT korumalı)
+// ✅ Verileri listele (JWT korumalı)
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -139,7 +139,7 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
-// Kayıt ve Drive videosunu sil (JWT korumalı)
+// ✅ Kayıt + Drive videosunu sil (JWT korumalı)
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
@@ -155,7 +155,7 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
       await deleteFromDrive(fileId);
       console.log("🗑 Drive dosyası silindi:", fileId);
     } catch (err) {
-      console.error("❌ Drive silme hatası:", err);
+      console.error("❌ Drive silme hatası:", err.message);
     }
   }
 
