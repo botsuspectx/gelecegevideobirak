@@ -8,12 +8,9 @@
     body {
       background: linear-gradient(135deg, #dbeafe, #e0f2fe);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
       margin: 0;
       overflow: hidden;
+      position: relative;
     }
 
     .background-capsules {
@@ -35,17 +32,56 @@
     }
 
     @keyframes float {
-      0% {
-        transform: translateY(100vh) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-10vh) rotate(360deg);
-        opacity: 0;
-      }
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+    }
+
+    .hover-menu-container {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hover-btn {
+      background-color: #2563eb;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 9999px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+      position: relative;
+    }
+
+    .hover-btn:hover {
+      background-color: #1d4ed8;
+    }
+
+    .hover-content {
+      position: absolute;
+      top: 50px;
+      background-color: white;
+      color: #1e293b;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: none;
+      width: 250px;
+      z-index: 999;
+    }
+
+    .hover-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .hover-content li {
+      margin-bottom: 8px;
+      font-size: 14px;
     }
 
     .form-container {
@@ -55,9 +91,11 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       max-width: 500px;
       width: 100%;
+      margin: auto;
       position: relative;
       z-index: 1;
     }
+
     .form-container::before {
       content: "";
       position: absolute;
@@ -71,6 +109,7 @@
       filter: blur(20px);
       opacity: 0.2;
     }
+
     input, textarea {
       width: 100%;
       padding: 12px;
@@ -79,6 +118,7 @@
       border-radius: 10px;
       font-size: 14px;
     }
+
     button {
       margin-top: 20px;
       width: 100%;
@@ -92,13 +132,16 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
+
     button:hover:not(:disabled) {
       background-color: #1d4ed8;
     }
+
     button:disabled {
       background-color: #94a3b8;
       cursor: not-allowed;
     }
+
     #loadingText {
       display: none;
       text-align: center;
@@ -107,6 +150,7 @@
       color: #475569;
       animation: pulse 1.5s infinite;
     }
+
     @keyframes pulse {
       0% { opacity: 0.3; }
       50% { opacity: 1; }
@@ -115,9 +159,39 @@
   </style>
 </head>
 <body>
+
   <!-- Arkaplan kapsülleri -->
   <div class="background-capsules" id="capsuleContainer"></div>
 
+  <!-- Hover Bilgilendirme Menüsü -->
+  <div class="hover-menu-container">
+    <div class="hover-btn" data-content="how">📋 Nasıl Çalışır?</div>
+    <div class="hover-btn" data-content="why">🔒 Neden Biz?</div>
+    <div class="hover-btn" data-content="faq">❓ SSS</div>
+
+    <div class="hover-content" id="how">
+      <ul>
+        <li>1️⃣ Videonu yükle ve teslim tarihini belirle</li>
+        <li>2️⃣ Notunu ekle</li>
+        <li>3️⃣ Belirlediğin tarihte gönderilsin</li>
+      </ul>
+    </div>
+    <div class="hover-content" id="why">
+      <ul>
+        <li>🔐 Google Drive ile güvenli saklama</li>
+        <li>📅 Zamanlanmış otomatik teslim</li>
+        <li>🧘 Kolay ve hızlı kullanım</li>
+      </ul>
+    </div>
+    <div class="hover-content" id="faq">
+      <ul>
+        <li><strong>S:</strong> Video ne kadar saklanır?</li>
+        <li><strong>C:</strong> Belirlenen teslim tarihine kadar.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Form -->
   <div class="form-container">
     <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
@@ -133,7 +207,7 @@
   </div>
 
   <script>
-    // Kapsül animasyonları üret
+    // Arkaplan kapsülleri üret
     const container = document.getElementById("capsuleContainer");
     for (let i = 0; i < 40; i++) {
       const capsule = document.createElement("div");
@@ -146,7 +220,28 @@
       container.appendChild(capsule);
     }
 
-    // Form işlemleri
+    // Hover kutularını yönet
+    const buttons = document.querySelectorAll('.hover-btn');
+    const contents = document.querySelectorAll('.hover-content');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        contents.forEach(content => content.style.display = 'none');
+        const target = document.getElementById(btn.dataset.content);
+        if (target) {
+          const rect = btn.getBoundingClientRect();
+          target.style.display = 'block';
+          target.style.left = `${btn.offsetLeft}px`;
+        }
+      });
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      const isInside = [...buttons, ...contents].some(el => el.contains(e.target));
+      if (!isInside) contents.forEach(c => c.style.display = 'none');
+    });
+
+    // Form gönderme
     const form = document.getElementById("messageForm");
     const loadingText = document.getElementById("loadingText");
     const submitButton = document.getElementById("submitButton");
@@ -167,13 +262,10 @@
         });
 
         const text = await response.text();
-        console.log("📦 Gelen yanıt:", text);
-
         let result;
         try {
           result = JSON.parse(text);
         } catch (err) {
-          console.error("❌ JSON parse hatası:", err);
           alert("Sunucudan geçersiz yanıt alındı:\n" + text);
           return;
         }
@@ -192,11 +284,8 @@
         localStorage.setItem("price", result.price);
         localStorage.setItem("tempFilename", result.tempFilename);
 
-        console.log("✅ Yönlendirme başlıyor...");
         window.location.href = "preview.html";
-
       } catch (err) {
-        console.error("❌ fetch hatası:", err);
         alert("Sunucuya ulaşılamadı.");
       } finally {
         submitButton.disabled = false;
