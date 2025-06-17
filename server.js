@@ -244,6 +244,8 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) 
     price: total_order_value,
     videoFilename: "Bilinmiyor (manuel eşleştirme gerekebilir)",
     timestamp: new Date().toISOString(),
+    platform_order_id
+
   };
 
   const dbPath = path.join(__dirname, "veriler.json");
