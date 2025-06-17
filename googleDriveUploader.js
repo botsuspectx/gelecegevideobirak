@@ -26,11 +26,16 @@ if (fs.existsSync(TOKEN_PATH)) {
 const drive = google.drive({ version: "v3", auth: oAuth2Client });
 
 // 🚀 Dosyayı Drive'a yükle
-const fileMetadata = {
-  name: filename,
-  parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-};
+async function uploadToDrive(filepath, originalname, fullname, email) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const clean = (text) => text.replace(/[^\w@.-]+/g, "_");
 
+  const cleanedName = `${clean(fullname)}-${clean(email)}-${timestamp}${path.extname(originalname)}`;
+
+  const fileMetadata = {
+    name: cleanedName,
+    parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+  };
 
   const media = {
     mimeType: "video/mp4",
@@ -56,7 +61,6 @@ const fileMetadata = {
 
     const publicLink = `https://drive.google.com/file/d/${fileId}/view`;
     return publicLink;
-
   } catch (error) {
     console.error("❌ Dosya yüklenemedi:", error.message);
     throw new Error("Google Drive yükleme hatası");
@@ -75,5 +79,5 @@ async function deleteFromDrive(fileId) {
 
 module.exports = {
   uploadToDrive,
-  deleteFromDrive
+  deleteFromDrive,
 };
