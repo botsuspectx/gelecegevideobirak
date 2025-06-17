@@ -18,23 +18,20 @@
 <body>
   <h1>❌ Ödeme başarısız oldu</h1>
   <p>İşlem iptal edildi veya bir hata oluştu.</p>
-  <p>Geçici dosyanız sistemden silindi.</p>
+  <p>Geçici video sistemden siliniyor...</p>
   <a href="index.html">Başa Dön</a>
 
   <script>
-    // Tarayıcıdan bilgileri temizle
-    localStorage.removeItem("tempFilename");
-    localStorage.removeItem("fullname");
-    localStorage.removeItem("email");
-    localStorage.removeItem("phone");
-    localStorage.removeItem("note");
-    localStorage.removeItem("deliveryDate");
-    localStorage.removeItem("sizeMB");
-    localStorage.removeItem("price");
-
-    // (İsteğe bağlı) sunucuya temp dosyayı sil komutu gönderilebilir
-    // fetch("/temizle-gecici-dosya", { method: "POST", body: JSON.stringify({ tempFilename }) })
-
+    const tempFilename = localStorage.getItem("tempFilename");
+    if (tempFilename) {
+      fetch("/temizle-gecici-dosya", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tempFilename }),
+      }).then(() => {
+        localStorage.clear();
+      });
+    }
   </script>
 </body>
 </html>
