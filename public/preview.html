@@ -88,41 +88,52 @@
     videoLinkEl.href = videoFilename;
     videoLinkEl.textContent = videoFilename.startsWith("http") ? "İzle" : videoFilename;
 
-    function handlePayment() {
-      if (parseFloat(price) === 0) {
-        // Ücretsizse direkt gönder
-        fetch("/save", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fullname,
-            email,
-            phone,
-            note,
-            deliveryDate,
-            sizeMB,
-            price,
-            videoFilename,
-          }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            alert("✅ Mesajınız başarıyla gönderildi!");
-            localStorage.clear();
-            window.location.href = "index.html";
-          } else {
-            alert("❌ Kayıt başarısız!");
-          }
-        })
-        .catch(err => {
-          console.error("❌ Kayıt hatası:", err);
-          alert("❌ Sunucuya ulaşılamadı.");
-        });
-      } else {
-        alert("💳 Bu video ücretli. Ödeme sistemi entegre edilince aktif olacaktır.");
-      }
-    }
+function handlePayment() {
+  if (parseFloat(price) === 0) {
+    // Ücretsizse kaydet
+    fetch("/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullname,
+        email,
+        phone,
+        note,
+        deliveryDate,
+        sizeMB,
+        price,
+        videoFilename,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert("✅ Mesajınız başarıyla gönderildi!");
+          localStorage.clear();
+          window.location.href = "index.html";
+        } else {
+          alert("❌ Küyıt başarısız!");
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Küyıt hatası:", err);
+        alert("❌ Sunucuya ulaşılamadı.");
+      });
+  } else {
+    // Üretliyse Shopier'e yönlendir
+    fetch("/shopier-odeme", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullname, email, price }),
+    })
+      .then((res) => res.text())
+      .then((html) => {
+        document.write(html);
+      })
+      .catch(() => alert("Ödeme başlatılamadı."));
+  }
+}
+
   </script>
 </body>
 </html>
