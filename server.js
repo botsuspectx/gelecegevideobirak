@@ -288,6 +288,21 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), async (req,
     res.status(500).send("Upload error");
   }
 });
+app.post("/temizle-gecici-dosya", (req, res) => {
+  const { tempFilename } = req.body;
+  if (!tempFilename) return res.status(400).json({ success: false, error: "Dosya adı yok" });
+
+  const filePath = path.join(__dirname, "uploads", tempFilename);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error("❌ Dosya silinemedi:", err);
+      return res.status(500).json({ success: false, error: "Dosya silinemedi" });
+    }
+    console.log("🗑️ Geçici dosya silindi:", tempFilename);
+    res.json({ success: true });
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
