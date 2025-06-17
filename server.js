@@ -35,61 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 app.use("/uploads", express.static(uploadDir));
 
-app.post("/shopier-odeme", (req, res) => {
-  try {
-    const { fullname, email, price } = req.body;
-
-    const apiKey = process.env.SHOPIER_API_KEY;
-    const secretKey = process.env.SHOPIER_SECRET_KEY;
-
-    const random_id = Date.now().toString();
-    const buyer_name = fullname;
-    const buyer_email = email;
-    const buyer_address = "Adres Yok";
-    const buyer_phone = "05555555555";
-    console.log("Shopier data:", data);
-console.log("İmza stringi:", signatureStr);
-console.log("İmza:", signature);
-
-
-    const data = {
-      API_key: apiKey,
-      website_index: "1",
-      product_name: "Geleceğe Mesaj Videosu",
-      buyer_name,
-      buyer_surname: "Soyisim",
-      buyer_email,
-      buyer_address,
-      buyer_phone,
-      order_price: price,
-      currency: "TL",
-      platform_order_id: random_id,
-      success_url: "http://localhost:3000/odeme-basarili.html",
-      failure_url: "http://localhost:3000/odeme-hata.html"
-    };
-
-    const ordered = Object.entries(data).sort();
-    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
-    const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
-
-    const formHTML = `
-      <form action="https://www.shopier.com/ShowProduct/api_pay4.php" method="post" id="shopierForm">
-        ${Object.entries(data)
-          .map(([key, val]) => `<input type="hidden" name="${key}" value="${val}">`)
-          .join("\n")}
-        <input type="hidden" name="signature" value="${signature}">
-      </form>
-      <script>document.getElementById("shopierForm").submit();</script>
-    `;
-
-    res.send(formHTML);
-  } catch (err) {
-    console.error("❌ Shopier ödeme hatası:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-// JWT middleware
+// 🔒 JWT middleware
 function authMiddleware(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) return res.status(403).send("⛔ Giriş gerekli");
@@ -102,6 +48,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
+// 🔐 Admin login
 app.post("/admin-login", (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -122,6 +69,55 @@ app.post("/admin-logout", (req, res) => {
   res.json({ success: true });
 });
 
+// 🧾 Shopier ödeme formu oluşturma
+app.post("/shopier-odeme", (req, res) => {
+  try {
+    const { fullname, email, price } = req.body;
+    const apiKey = process.env.SHOPIER_API_KEY;
+    const secretKey = process.env.SHOPIER_SECRET_KEY;
+    const random_id = Date.now().toString();
+
+    const data = {
+      API_key: apiKey,
+      website_index: "1",
+      product_name: "Geleceğe Mesaj Videosu",
+      buyer_name: fullname,
+      buyer_surname: "Soyisim",
+      buyer_email: email,
+      buyer_address: "Adres Yok",
+      buyer_phone: "05555555555",
+      order_price: price,
+      currency: "TL",
+      platform_order_id: random_id,
+      success_url: "http://localhost:3000/odeme-basarili.html",
+      failure_url: "http://localhost:3000/odeme-hata.html"
+    };
+
+    const ordered = Object.entries(data).sort();
+    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
+    const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
+
+    console.log("Shopier data:", data);
+    console.log("İmza stringi:", signatureStr);
+    console.log("İmza:", signature);
+
+    const formHTML = `
+      <form action="https://www.shopier.com/ShowProduct/api_pay4.php" method="post" id="shopierForm">
+        ${Object.entries(data)
+          .map(([key, val]) => `<input type="hidden" name="${key}" value="${val}">`)
+          .join("\n")}
+        <input type="hidden" name="signature" value="${signature}">
+      </form>
+      <script>document.getElementById("shopierForm").submit();</script>
+    `;
+    res.send(formHTML);
+  } catch (err) {
+    console.error("❌ Shopier ödeme hatası:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// 🎥 Video yükleme
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   const { fullname, email } = req.body;
@@ -132,7 +128,6 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   try {
     const driveLink = await uploadToDrive(video.path, video.originalname, fullname, email);
     fs.unlink(video.path, () => {});
-
     const sizeMB = video.size / (1024 * 1024);
     const price = sizeMB <= 5 ? 0 :
                   sizeMB <= 20 ? 10 :
@@ -153,6 +148,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
+// 💾 Veri kaydetme
 app.post("/save", (req, res) => {
   const { fullname, email, phone, note, deliveryDate, sizeMB, price, videoFilename } = req.body;
   const yeniVeri = {
@@ -173,6 +169,7 @@ app.post("/save", (req, res) => {
   res.json({ success: true });
 });
 
+// 📊 Verileri listele
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -180,10 +177,10 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
+// ❌ Kayıt sil
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
-
   const data = JSON.parse(fs.readFileSync(dbPath));
   const itemToDelete = data.find(item => item.timestamp === req.params.timestamp);
   if (!itemToDelete) return res.status(404).json({ success: false });
@@ -193,7 +190,6 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
     const fileId = match[1];
     try {
       await deleteFromDrive(fileId);
-      console.log("🗑 Drive dosyası silindi:", fileId);
     } catch (err) {
       console.error("❌ Drive silme hatası:", err.message);
     }
@@ -204,6 +200,7 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
+// 📥 Shopier ödeme sonrası otomatik kayıt (webhook)
 app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) => {
   const {
     platform_order_id,
@@ -215,9 +212,7 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) 
     payment_status
   } = req.body;
 
-  if (payment_status !== "success") {
-    return res.status(200).send("Ignored non-success status");
-  }
+  if (payment_status !== "success") return res.status(200).send("Ignored non-success status");
 
   const yeniVeri = {
     fullname: `${buyer_name} ${buyer_surname}`,
