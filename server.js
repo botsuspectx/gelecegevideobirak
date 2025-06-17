@@ -185,25 +185,31 @@ app.post("/shopier-basarili-yukle", async (req, res) => {
 });
 
 // Kayıt kaydetme
-app.post("/save", (req, res) => {
-  const { fullname, email, phone, note, deliveryDate, sizeMB, price, videoFilename } = req.body;
-  const yeniVeri = {
-    fullname,
-    email,
-    phone,
-    note,
-    deliveryDate,
-    sizeMB,
-    price,
-    videoFilename,
-    timestamp: new Date().toISOString(),
-  };
-  const dbPath = path.join(__dirname, "veriler.json");
-  const current = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-  current.push(yeniVeri);
-  fs.writeFileSync(dbPath, JSON.stringify(current, null, 2));
-  res.json({ success: true });
+app.post("/save", async (req, res) => {
+  try {
+    const { fullname, email, phone, note, deliveryDate, sizeMB, price, videoFilename } = req.body;
+
+    const yeniVeri = new Veri({
+      fullname,
+      email,
+      phone,
+      note,
+      deliveryDate,
+      sizeMB,
+      price,
+      videoFilename,
+      timestamp: new Date().toISOString(),
+    });
+
+    await yeniVeri.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ MongoDB kayıt hatası:", err);
+    res.status(500).json({ success: false, message: "Kayıt başarısız" });
+  }
 });
+
 
 // Kayıtları listele
 app.get("/veriler", authMiddleware, (req, res) => {
