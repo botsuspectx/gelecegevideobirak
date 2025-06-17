@@ -217,6 +217,46 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
+app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) => {
+  const {
+    platform_order_id,
+    buyer_name,
+    buyer_surname,
+    buyer_email,
+    total_order_value,
+    installment,
+    payment_status
+  } = req.body;
+
+  // Sadece başarılı ödemeleri al
+  if (payment_status !== "success") {
+    return res.status(200).send("Ignored non-success status");
+  }
+
+  // Kayıt için örnek veri oluştur
+  const yeniVeri = {
+    fullname: `${buyer_name} ${buyer_surname}`,
+    email: buyer_email,
+    phone: "", // webhook ile gelmiyor
+    note: "Shopier'den gelen kayıt",
+    deliveryDate: new Date().toISOString().slice(0, 10),
+    sizeMB: "Bilinmiyor",
+    price: total_order_value,
+    videoFilename: "Bilinmiyor (manuel eşleştirme gerekebilir)",
+    timestamp: new Date().toISOString(),
+  };
+
+  const dbPath = path.join(__dirname, "veriler.json");
+  const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
+
+  currentData.push(yeniVeri);
+  fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
+
+  console.log("✅ Shopier ödemesiyle kayıt eklendi:", yeniVeri.fullname);
+  res.status(200).send("OK");
+});
+
+
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
 });
