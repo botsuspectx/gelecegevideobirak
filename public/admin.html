@@ -12,6 +12,9 @@
     h2 {
       text-align: center;
     }
+    .section {
+      margin-bottom: 50px;
+    }
     input[type="text"] {
       width: 300px;
       padding: 10px;
@@ -57,47 +60,57 @@
 </head>
 <body>
   <h2>📂 Admin Paneli</h2>
-  <div style="text-align: center; margin-bottom: 20px;">
-    <button onclick="logout()" style="background-color: #999; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
-      Çıkış Yap
-    </button>
+
+  <div style="text-align: center; margin-bottom: 30px;">
+    <button onclick="logout()" style="background-color: #999; color: white; padding: 10px 20px; border-radius: 6px;">Çıkış Yap</button>
   </div>
 
-  <input type="text" id="search" placeholder="İsim, e-posta, telefon ara..." />
+  <div class="section">
+    <h3>📦 Video Kayıtları</h3>
+    <input type="text" id="search" placeholder="İsim, e-posta, telefon ara..." />
+    <table>
+      <thead>
+        <tr>
+          <th>İsim Soyisim</th>
+          <th>E-posta</th>
+          <th>Telefon</th>
+          <th>Not</th>
+          <th>Teslim Tarihi</th>
+          <th>Boyut (MB)</th>
+          <th>Ücret (₺)</th>
+          <th>Tarih</th>
+          <th>Video</th>
+          <th>Sil</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>İsim Soyisim</th>
-        <th>E-posta</th>
-        <th>Telefon</th>
-        <th>Not</th>
-        <th>Teslim Tarihi</th>
-        <th>Boyut (MB)</th>
-        <th>Ücret (₺)</th>
-        <th>Tarih</th>
-        <th>Video</th>
-        <th>Sil</th>
-      </tr>
-    </thead>
-    <tbody id="dataBody"></tbody>
-  </table>
+  <div class="section">
+    <h3>🗨️ Kullanıcı Yorumları</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>İsim</th>
+          <th>Yorum</th>
+          <th>Tarih</th>
+          <th>Sil</th>
+        </tr>
+      </thead>
+      <tbody id="yorumBody"></tbody>
+    </table>
+  </div>
 
   <script>
     function logout() {
-      fetch("/admin-logout", {
-        method: "POST"
-      })
-      .then(() => {
+      fetch("/admin-logout", { method: "POST" }).then(() => {
         window.location.href = "admin-login.html";
-      })
-      .catch(() => {
-        alert("❌ Çıkış yapılamadı.");
-      });
+      }).catch(() => alert("❌ Çıkış yapılamadı."));
     }
 
+    // VERİLER
     let allData = [];
-
     function fetchData() {
       fetch("/veriler")
         .then(res => {
@@ -116,10 +129,8 @@
     function displayData(data) {
       const tbody = document.getElementById("dataBody");
       tbody.innerHTML = "";
-
       data.forEach(item => {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
           <td>${item.fullname}</td>
           <td>${item.email}</td>
@@ -132,35 +143,19 @@
           <td><button class="link-button" onclick="showVideo('${item.videoFilename}')">Göster</button></td>
           <td><button onclick="deleteData('${item.timestamp}')">Sil</button></td>
         `;
-
         tbody.appendChild(tr);
       });
     }
 
-function deleteData(timestamp) {
-  if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
-
-  fetch(`/veriler/${timestamp}`, {
-    method: "DELETE",
-    credentials: "include"
-  })
-  .then(res => {
-    if (!res.ok) {
-      return res.text().then(msg => {
-        alert("❌ Silme başarısız: " + msg);
-        throw new Error(msg);
-      });
+    function deleteData(timestamp) {
+      if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+      fetch(`/veriler/${timestamp}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      .then(res => res.json())
+      .then(() => fetchData());
     }
-    return res.json();
-  })
-  .then(() => {
-    fetchData();
-  })
-  .catch(err => {
-    console.error("❌ Silme hatası:", err);
-  });
-}
-
 
     function showVideo(filename) {
       if (!filename) return alert("Video dosyası bulunamadı.");
@@ -178,7 +173,37 @@ function deleteData(timestamp) {
       displayData(filtered);
     });
 
+    // YORUMLAR
+    function fetchYorumlar() {
+      fetch("/yorumlar")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById("yorumBody");
+          tbody.innerHTML = "";
+          data.reverse().forEach(y => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${y.showName ? y.name : "Anonim"}</td>
+              <td>${y.comment}</td>
+              <td>${new Date(y.timestamp).toLocaleString("tr-TR")}</td>
+              <td><button onclick="deleteYorum('${y.timestamp}')">Sil</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function deleteYorum(timestamp) {
+      if (!confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
+      fetch(`/yorumlar/${timestamp}`, {
+        method: "DELETE"
+      })
+      .then(res => res.json())
+      .then(() => fetchYorumlar());
+    }
+
     fetchData();
+    fetchYorumlar();
   </script>
 </body>
 </html>
