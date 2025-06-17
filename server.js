@@ -13,6 +13,53 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "gizliAnahtar123";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+const crypto = require("crypto");
+
+app.post("/shopier-odeme", (req, res) => {
+  const { fullname, email, price } = req.body;
+
+  const apiKey = process.env.SHOPIER_API_KEY;
+  const secretKey = process.env.SHOPIER_SECRET_KEY;
+
+  const random_id = Date.now().toString();
+  const buyer_name = fullname;
+  const buyer_email = email;
+  const buyer_address = "Adres Yok";
+  const buyer_phone = "05555555555"; // İsteğe bağlı
+
+  const data = {
+    API_key: apiKey,
+    website_index: "1",
+    product_name: "Geleceğe Mesaj Videosu",
+    buyer_name,
+    buyer_surname: "Soyisim",
+    buyer_email,
+    buyer_address,
+    buyer_phone,
+    order_price: price,
+    currency: "TL",
+    platform_order_id: random_id,
+    success_url: "http://localhost:3000/odeme-basarili.html",
+    failure_url: "http://localhost:3000/odeme-hata.html"
+  };
+
+  const ordered = Object.entries(data).sort();
+  const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
+  const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
+
+  const formHTML = `
+    <form action="https://www.shopier.com/ShowProduct/api_pay4.php" method="post" id="shopierForm">
+      ${Object.entries(data)
+        .map(([key, val]) => `<input type="hidden" name="${key}" value="${val}">`)
+        .join("\n")}
+      <input type="hidden" name="signature" value="${signature}">
+    </form>
+    <script>document.getElementById("shopierForm").submit();</script>
+  `;
+
+  res.send(formHTML);
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
