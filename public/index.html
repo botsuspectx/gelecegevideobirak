@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -7,8 +6,8 @@
   <title>Geleceğe Mesaj</title>
   <style>
     body {
-      background: linear-gradient(to right, #ffecd2, #fcb69f);
-      font-family: sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -18,36 +17,71 @@
     .form-container {
       background: white;
       padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       max-width: 500px;
       width: 100%;
+      position: relative;
+    }
+    .form-container::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      bottom: -10px;
+      left: -10px;
+      z-index: -1;
+      background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      border-radius: 25px;
+      filter: blur(20px);
+      opacity: 0.2;
     }
     input, textarea {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
     }
     button {
       margin-top: 20px;
       width: 100%;
       padding: 12px;
-      background-color: #495579;
+      background-color: #2563eb;
       color: white;
+      font-size: 16px;
+      font-weight: bold;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #263159;
+    button:hover:not(:disabled) {
+      background-color: #1d4ed8;
+    }
+    button:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+    #loadingText {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+      font-style: italic;
+      color: #475569;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
     }
   </style>
 </head>
 <body>
   <div class="form-container">
-    <h2>📩 Geleceğe Mesaj Gönder</h2>
+    <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
       <input type="text" name="fullname" placeholder="İsim Soyisim" required>
       <input type="email" name="email" placeholder="E-posta" required>
@@ -55,17 +89,25 @@
       <textarea name="note" placeholder="Notun:" rows="4" required></textarea>
       <input type="date" name="deliveryDate" required>
       <input type="file" name="video" accept="video/*" required>
-      <button type="submit">Gönder</button>
+      <button type="submit" id="submitButton">Gönder</button>
+      <div id="loadingText">⏳ Video yükleniyor, lütfen bekleyiniz...</div>
     </form>
   </div>
 
   <script>
     const form = document.getElementById("messageForm");
+    const loadingText = document.getElementById("loadingText");
+    const submitButton = document.getElementById("submitButton");
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const formData = new FormData(form);
+
+      // Butonu pasifleştir ve yükleniyor mesajını göster
+      submitButton.disabled = true;
+      submitButton.textContent = "Gönderiliyor...";
+      loadingText.style.display = "block";
 
       try {
         const response = await fetch("/submit", {
@@ -105,6 +147,11 @@
       } catch (err) {
         console.error("❌ fetch hatası:", err);
         alert("Sunucuya ulaşılamadı.");
+      } finally {
+        // Bu kodlar yönlendirme öncesi bir hata varsa çalışır
+        submitButton.disabled = false;
+        submitButton.textContent = "Gönder";
+        loadingText.style.display = "none";
       }
     });
   </script>
