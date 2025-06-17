@@ -1,5 +1,5 @@
-require("dotenv").config();
 const path = require("path");
+require("dotenv").config();
 const { google } = require("googleapis");
 const fs = require("fs");
 
@@ -25,10 +25,14 @@ if (fs.existsSync(TOKEN_PATH)) {
 // Google Drive API nesnesi
 const drive = google.drive({ version: "v3", auth: oAuth2Client });
 
-// 🚀 Dosyayı Drive'a yükle (basit versiyon)
-async function uploadToDrive(filepath, filename) {
+// 🚀 Dosyayı Drive'a yükle
+async function uploadToDrive(filepath, originalname, fullname, email) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const clean = (text) => text.replace(/[^\w@.-]+/g, "_");
+  const cleanedName = `${clean(fullname)}-${clean(email)}-${timestamp}${path.extname(originalname)}`;
+
   const fileMetadata = {
-    name: filename,
+    name: cleanedName,
     parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
   };
 
