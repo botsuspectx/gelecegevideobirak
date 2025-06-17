@@ -13,7 +13,41 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
+      overflow: hidden;
     }
+
+    .background-capsules {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .capsule {
+      position: absolute;
+      width: 40px;
+      height: 16px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, 0.3);
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
     .form-container {
       background: white;
       padding: 30px;
@@ -22,6 +56,7 @@
       max-width: 500px;
       width: 100%;
       position: relative;
+      z-index: 1;
     }
     .form-container::before {
       content: "";
@@ -80,6 +115,9 @@
   </style>
 </head>
 <body>
+  <!-- Arkaplan kapsülleri -->
+  <div class="background-capsules" id="capsuleContainer"></div>
+
   <div class="form-container">
     <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
@@ -95,6 +133,20 @@
   </div>
 
   <script>
+    // Kapsül animasyonları üret
+    const container = document.getElementById("capsuleContainer");
+    for (let i = 0; i < 40; i++) {
+      const capsule = document.createElement("div");
+      capsule.classList.add("capsule");
+      capsule.style.left = Math.random() * 100 + "vw";
+      capsule.style.top = Math.random() * 100 + "vh";
+      capsule.style.backgroundColor = `rgba(59, 130, 246, ${Math.random() * 0.4 + 0.1})`;
+      capsule.style.animationDuration = (Math.random() * 20 + 10) + "s";
+      capsule.style.animationDelay = (Math.random() * 10) + "s";
+      container.appendChild(capsule);
+    }
+
+    // Form işlemleri
     const form = document.getElementById("messageForm");
     const loadingText = document.getElementById("loadingText");
     const submitButton = document.getElementById("submitButton");
@@ -104,7 +156,6 @@
 
       const formData = new FormData(form);
 
-      // Butonu pasifleştir ve yükleniyor mesajını göster
       submitButton.disabled = true;
       submitButton.textContent = "Gönderiliyor...";
       loadingText.style.display = "block";
@@ -139,8 +190,7 @@
         localStorage.setItem("deliveryDate", form.deliveryDate.value);
         localStorage.setItem("sizeMB", result.sizeMB);
         localStorage.setItem("price", result.price);
-        localStorage.setItem("tempFilename", result.tempFilename); // 🔧 bu satır önemli
-
+        localStorage.setItem("tempFilename", result.tempFilename);
 
         console.log("✅ Yönlendirme başlıyor...");
         window.location.href = "preview.html";
@@ -149,7 +199,6 @@
         console.error("❌ fetch hatası:", err);
         alert("Sunucuya ulaşılamadı.");
       } finally {
-        // Bu kodlar yönlendirme öncesi bir hata varsa çalışır
         submitButton.disabled = false;
         submitButton.textContent = "Gönder";
         loadingText.style.display = "none";
