@@ -8,6 +8,14 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { uploadToDrive, deleteFromDrive } = require("./googleDriveUploader");
+const mongoose = require("mongoose");
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("✅ MongoDB bağlantısı başarılı"))
+.catch((err) => console.error("❌ MongoDB bağlantı hatası:", err));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +30,22 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const veriSchema = new mongoose.Schema({
+  fullname: String,
+  email: String,
+  phone: String,
+  note: String,
+  deliveryDate: String,
+  sizeMB: String,
+  price: String,
+  videoFilename: String,
+  timestamp: String,
+  platform_order_id: String
+});
+
+const Veri = mongoose.model("Veri", veriSchema);
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -172,11 +196,6 @@ app.post("/shopier-basarili-yukle", async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
-    const dbPath = path.join(__dirname, "veriler.json");
-    const current = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-    current.push(yeniVeri);
-    fs.writeFileSync(dbPath, JSON.stringify(current, null, 2));
-
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Drive yükleme hatası:", err);
@@ -212,34 +231,36 @@ app.post("/save", async (req, res) => {
 
 
 // Kayıtları listele
-app.get("/veriler", authMiddleware, (req, res) => {
-  const dbPath = path.join(__dirname, "veriler.json");
-  if (!fs.existsSync(dbPath)) return res.json([]);
-  const data = JSON.parse(fs.readFileSync(dbPath));
-  res.json(data);
+app.get("/veriler", authMiddleware, async (req, res) => {
+  try {
+    const veriler = await Veri.find().sort({ timestamp: -1 });
+    res.json(veriler);
+  } catch (err) {
+    console.error("❌ Veriler alınamadı:", err);
+    res.status(500).json({ success: false });
+  }
 });
+
 
 // Kayıt silme
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
-  const dbPath = path.join(__dirname, "veriler.json");
-  if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
-  const data = JSON.parse(fs.readFileSync(dbPath));
-  const itemToDelete = data.find(item => item.timestamp === req.params.timestamp);
-  if (!itemToDelete) return res.status(404).json({ success: false });
+  try {
+    const silinecek = await Veri.findOne({ timestamp: req.params.timestamp });
+    if (!silinecek) return res.status(404).json({ success: false });
 
-  const match = itemToDelete.videoFilename.match(/\/d\/(.+?)\//);
-  if (match && match[1]) {
-    const fileId = match[1];
-    try {
-      await deleteFromDrive(fileId);
-    } catch (err) {
-      console.error("❌ Drive silme hatası:", err.message);
+    // Drive’dan sil
+    const match = silinecek.videoFilename.match(/\/d\/(.+?)\//);
+    if (match && match[1]) {
+      await deleteFromDrive(match[1]);
     }
-  }
 
-  const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
-  fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
-  res.json({ success: true });
+    await Veri.deleteOne({ timestamp: req.params.timestamp });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Silme hatası:", err);
+    res.status(500).json({ success: false });
+  }
 });
 
 // Webhook sonrası kayıt
@@ -282,10 +303,8 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), async (req,
       platform_order_id
     };
 
-    const dbPath = path.join(__dirname, "veriler.json");
-    const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-    currentData.push(yeniVeri);
-    fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
+    await new Veri(yeniVeri).save();
+
 
     console.log("✅ Shopier ödemesiyle kayıt ve yükleme başarılı:", yeniVeri.fullname);
     res.status(200).send("OK");
