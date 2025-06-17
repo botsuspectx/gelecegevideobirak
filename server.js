@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 app.use("/uploads", express.static(uploadDir));
 
-// 🔒 JWT middleware
+// JWT kontrol middleware
 function authMiddleware(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) return res.status(403).send("⛔ Giriş gerekli");
@@ -48,7 +48,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// 🔐 Admin login
+// Admin girişi
 app.post("/admin-login", (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -69,17 +69,18 @@ app.post("/admin-logout", (req, res) => {
   res.json({ success: true });
 });
 
-// 🧾 Shopier ödeme formu oluşturma
+// Shopier ödeme formu
 app.post("/shopier-odeme", (req, res) => {
   try {
     const { fullname, email, price } = req.body;
     const apiKey = process.env.SHOPIER_API_KEY;
     const secretKey = process.env.SHOPIER_SECRET_KEY;
+    const websiteIndex = process.env.SHOPIER_WEBSITE_INDEX;
     const random_id = Date.now().toString();
 
     const data = {
       API_key: apiKey,
-      website_index: "1",
+      website_index: websiteIndex,
       product_name: "Geleceğe Mesaj Videosu",
       buyer_name: fullname,
       buyer_surname: "Soyisim",
@@ -89,8 +90,8 @@ app.post("/shopier-odeme", (req, res) => {
       order_price: price,
       currency: "TL",
       platform_order_id: random_id,
-      success_url: "http://localhost:3000/odeme-basarili.html",
-      failure_url: "http://localhost:3000/odeme-hata.html"
+      success_url: "https://gelecegevideobirak.onrender.com/odeme-basarili.html",
+      failure_url: "https://gelecegevideobirak.onrender.com/odeme-hata.html"
     };
 
     const ordered = Object.entries(data).sort();
@@ -117,7 +118,7 @@ app.post("/shopier-odeme", (req, res) => {
   }
 });
 
-// 🎥 Video yükleme
+// Video yükleme
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   const { fullname, email } = req.body;
@@ -148,7 +149,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
-// 💾 Veri kaydetme
+// Kayıt kaydetme
 app.post("/save", (req, res) => {
   const { fullname, email, phone, note, deliveryDate, sizeMB, price, videoFilename } = req.body;
   const yeniVeri = {
@@ -163,13 +164,13 @@ app.post("/save", (req, res) => {
     timestamp: new Date().toISOString(),
   };
   const dbPath = path.join(__dirname, "veriler.json");
-  const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-  currentData.push(yeniVeri);
-  fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
+  const current = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
+  current.push(yeniVeri);
+  fs.writeFileSync(dbPath, JSON.stringify(current, null, 2));
   res.json({ success: true });
 });
 
-// 📊 Verileri listele
+// Kayıtları listele
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -177,7 +178,7 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
-// ❌ Kayıt sil
+// Kayıt silme
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
@@ -200,7 +201,7 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
-// 📥 Shopier ödeme sonrası otomatik kayıt (webhook)
+// Webhook sonrası kayıt
 app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) => {
   const {
     platform_order_id,
