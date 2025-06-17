@@ -157,7 +157,6 @@
       100% { opacity: 0.3; }
     }
 
-    /* Yorumlar Bölümü */
     .yorumlar-wrapper {
       max-width: 600px;
       margin: 40px auto;
@@ -189,15 +188,6 @@
     .yorumlar-wrapper .yorum small {
       color: gray;
       font-size: 13px;
-    }
-
-    .yorumlar-wrapper .yorum .delete-btn {
-      float: right;
-      background: none;
-      color: red;
-      border: none;
-      font-size: 13px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -256,13 +246,11 @@
       <button type="submit">Yorumu Gönder</button>
     </form>
 
-    <div id="yorumlarListesi">
-      <!-- JavaScript ile doldurulacak -->
-    </div>
+    <div id="yorumlarListesi"></div>
   </div>
 
   <script>
-    // Kapsüller
+    // Arkaplan kapsülleri
     const container = document.getElementById("capsuleContainer");
     for (let i = 0; i < 40; i++) {
       const capsule = document.createElement("div");
@@ -275,7 +263,7 @@
       container.appendChild(capsule);
     }
 
-    // Hover kutular
+    // Hover içerikleri
     const buttons = document.querySelectorAll('.hover-btn');
     const contents = document.querySelectorAll('.hover-content');
     buttons.forEach(btn => {
@@ -327,7 +315,6 @@
 
     // Yorum gönderme
     const yorumForm = document.getElementById("yorumForm");
-    const yorumlarListesi = document.getElementById("yorumlarListesi");
     yorumForm.addEventListener("submit", async function (e) {
       e.preventDefault();
       const formData = new FormData(yorumForm);
@@ -341,7 +328,8 @@
         });
         const result = await res.json();
         if (result.success) {
-          window.location.reload();
+          yorumForm.reset();
+          yorumlariGetir();
         } else {
           alert("Yorum eklenemedi");
         }
@@ -349,6 +337,30 @@
         alert("Sunucu hatası.");
       }
     });
+
+    // Yorumları listele
+    async function yorumlariGetir() {
+      try {
+        const res = await fetch("/yorumlar");
+        const yorumlar = await res.json();
+        const liste = document.getElementById("yorumlarListesi");
+        liste.innerHTML = "";
+
+        yorumlar.reverse().forEach(y => {
+          const yorum = document.createElement("div");
+          yorum.classList.add("yorum");
+          yorum.innerHTML = `
+            <p>${y.comment}</p>
+            <small>${y.showName ? y.name : "Anonim"} – ${new Date(y.timestamp).toLocaleString("tr-TR")}</small>
+          `;
+          liste.appendChild(yorum);
+        });
+      } catch (err) {
+        console.error("Yorumlar alınamadı:", err);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", yorumlariGetir);
   </script>
 </body>
 </html>
