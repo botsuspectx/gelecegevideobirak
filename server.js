@@ -47,6 +47,10 @@ app.post("/shopier-odeme", (req, res) => {
     const buyer_email = email;
     const buyer_address = "Adres Yok";
     const buyer_phone = "05555555555";
+    console.log("Shopier data:", data);
+console.log("İmza stringi:", signatureStr);
+console.log("İmza:", signature);
+
 
     const data = {
       API_key: apiKey,
