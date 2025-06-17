@@ -126,26 +126,61 @@ app.post("/submit", upload.single("video"), async (req, res) => {
     return res.status(400).json({ success: false, error: "Eksik bilgi veya video." });
   }
 
-  try {
-    const driveLink = await uploadToDrive(video.path, video.originalname, fullname, email);
-    fs.unlink(video.path, () => {});
-    const sizeMB = video.size / (1024 * 1024);
-    const price = sizeMB <= 5 ? 0 :
-                  sizeMB <= 20 ? 10 :
-                  sizeMB <= 50 ? 20 :
-                  sizeMB <= 100 ? 30 :
-                  sizeMB <= 500 ? 40 :
-                  sizeMB <= 1024 ? 50 : 200;
+  const sizeMB = video.size / (1024 * 1024);
+  const price = sizeMB <= 5 ? 0 :
+                sizeMB <= 20 ? 10 :
+                sizeMB <= 50 ? 20 :
+                sizeMB <= 100 ? 30 :
+                sizeMB <= 500 ? 40 :
+                sizeMB <= 1024 ? 50 : 200;
 
-    return res.json({
-      success: true,
-      videoFilename: driveLink,
-      sizeMB: sizeMB.toFixed(2),
+  // Burada sadece dosya adını dön, henüz Drive'a yükleme
+  res.json({
+    success: true,
+    tempFilename: video.filename,
+    sizeMB: sizeMB.toFixed(2),
+    price,
+  });
+});
+app.post("/shopier-basarili-yukle", async (req, res) => {
+  const {
+    fullname,
+    email,
+    phone,
+    note,
+    deliveryDate,
+    sizeMB,
+    price,
+    tempFilename
+  } = req.body;
+
+  const videoPath = path.join(__dirname, "uploads", tempFilename);
+
+  try {
+    const driveLink = await uploadToDrive(videoPath, tempFilename, fullname, email);
+    fs.unlink(videoPath, () => {}); // Sunucudan sil
+
+    const yeniVeri = {
+      fullname,
+      email,
+      phone,
+      note,
+      deliveryDate,
+      sizeMB,
       price,
-    });
+      videoFilename: driveLink,
+      timestamp: new Date().toISOString(),
+    };
+
+    const dbPath = path.join(__dirname, "veriler.json");
+    const current = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
+    current.push(yeniVeri);
+    fs.writeFileSync(dbPath, JSON.stringify(current, null, 2));
+
+    res.json({ success: true });
   } catch (err) {
     console.error("❌ Drive yükleme hatası:", err);
-    return res.status(500).json({ success: false, error: "Drive yüklenemedi." });
+    res.status(500).json({ success: false, error: "Yükleme başarısız." });
   }
 });
 
@@ -202,39 +237,56 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
 });
 
 // Webhook sonrası kayıt
-app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) => {
+app.post("/shopier-webhook", express.urlencoded({ extended: true }), async (req, res) => {
   const {
     platform_order_id,
     buyer_name,
     buyer_surname,
     buyer_email,
     total_order_value,
-    installment,
     payment_status
   } = req.body;
 
   if (payment_status !== "success") return res.status(200).send("Ignored non-success status");
 
-  const yeniVeri = {
-    fullname: `${buyer_name} ${buyer_surname}`,
-    email: buyer_email,
-    phone: "",
-    note: "Shopier'den gelen kayıt",
-    deliveryDate: new Date().toISOString().slice(0, 10),
-    sizeMB: "Bilinmiyor",
-    price: total_order_value,
-    videoFilename: "Bilinmiyor (manuel eşleştirme gerekebilir)",
-    timestamp: new Date().toISOString(),
-    platform_order_id
-  };
+  const fileList = fs.readdirSync(path.join(__dirname, "uploads"));
+  const matchingFile = fileList.find(name => name.includes(platform_order_id.slice(-6)));
 
-  const dbPath = path.join(__dirname, "veriler.json");
-  const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-  currentData.push(yeniVeri);
-  fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
+  if (!matchingFile) {
+    console.error("❌ Eşleşen dosya bulunamadı.");
+    return res.status(404).send("Video dosyası bulunamadı");
+  }
 
-  console.log("✅ Shopier ödemesiyle kayıt eklendi:", yeniVeri.fullname);
-  res.status(200).send("OK");
+  const filePath = path.join(__dirname, "uploads", matchingFile);
+
+  try {
+    const videoFilename = await uploadToDrive(filePath, matchingFile, buyer_name, buyer_email);
+    fs.unlinkSync(filePath);
+
+    const yeniVeri = {
+      fullname: `${buyer_name} ${buyer_surname}`,
+      email: buyer_email,
+      phone: "",
+      note: "Shopier'den gelen kayıt",
+      deliveryDate: new Date().toISOString().slice(0, 10),
+      sizeMB: "Bilinmiyor",
+      price: total_order_value,
+      videoFilename,
+      timestamp: new Date().toISOString(),
+      platform_order_id
+    };
+
+    const dbPath = path.join(__dirname, "veriler.json");
+    const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
+    currentData.push(yeniVeri);
+    fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
+
+    console.log("✅ Shopier ödemesiyle kayıt ve yükleme başarılı:", yeniVeri.fullname);
+    res.status(200).send("OK");
+  } catch (err) {
+    console.error("❌ Drive yükleme hatası webhook içinde:", err);
+    res.status(500).send("Upload error");
+  }
 });
 
 app.listen(PORT, () => {
