@@ -324,6 +324,58 @@ app.post("/temizle-gecici-dosya", (req, res) => {
   });
 });
 
+app.post("/yorum-ekle", (req, res) => {
+  const { name, email, comment, showName } = req.body;
+
+  if (!name || !email || !comment) {
+    return res.status(400).json({ success: false, message: "Gerekli alanlar eksik." });
+  }
+
+  const yeniYorum = {
+    name: name.trim(),
+    email: email.trim(),
+    comment: comment.trim(),
+    showName: showName === true || showName === "true",
+    timestamp: new Date().toISOString(),
+  };
+
+  const yorumDosyasi = path.join(__dirname, "yorumlar.json");
+  let yorumlar = [];
+
+  if (fs.existsSync(yorumDosyasi)) {
+    yorumlar = JSON.parse(fs.readFileSync(yorumDosyasi));
+  }
+
+  yorumlar.push(yeniYorum);
+  fs.writeFileSync(yorumDosyasi, JSON.stringify(yorumlar, null, 2));
+
+  res.json({ success: true });
+});
+
+app.get("/yorumlar", (req, res) => {
+  const yorumDosyasi = path.join(__dirname, "yorumlar.json");
+  if (!fs.existsSync(yorumDosyasi)) return res.json([]);
+
+  const yorumlar = JSON.parse(fs.readFileSync(yorumDosyasi));
+  res.json(yorumlar);
+});
+
+app.delete("/yorumlar/:timestamp", (req, res) => {
+  const yorumDosyasi = path.join(__dirname, "yorumlar.json");
+  if (!fs.existsSync(yorumDosyasi)) return res.status(404).json({ success: false });
+
+  const yorumlar = JSON.parse(fs.readFileSync(yorumDosyasi));
+  const yeniYorumlar = yorumlar.filter(y => y.timestamp !== req.params.timestamp);
+
+  if (yorumlar.length === yeniYorumlar.length) {
+    return res.status(404).json({ success: false, message: "Yorum bulunamadı" });
+  }
+
+  fs.writeFileSync(yorumDosyasi, JSON.stringify(yeniYorumlar, null, 2));
+  res.json({ success: true });
+});
+
+
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
 });
