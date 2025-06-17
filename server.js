@@ -79,7 +79,9 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 
   try {
+    const { fullname, email } = req.body;
     const driveLink = await uploadToDrive(video.path, video.originalname, fullname, email);
+
     fs.unlink(video.path, () => {});
 
     const sizeMB = video.size / (1024 * 1024);
