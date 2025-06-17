@@ -73,7 +73,7 @@
     const deliveryDate = localStorage.getItem("deliveryDate") || "";
     const sizeMB = localStorage.getItem("sizeMB") || "0";
     const price = localStorage.getItem("price") || "0";
-    const videoFilename = localStorage.getItem("videoFilename") || "#";
+    const tempFilename = localStorage.getItem("tempFilename") || "#";
 
     document.getElementById("name").textContent = fullname;
     document.getElementById("email").textContent = email;
@@ -82,14 +82,13 @@
     document.getElementById("deliveryDate").textContent = deliveryDate;
     document.getElementById("videoSize").textContent = sizeMB + " MB";
     document.getElementById("videoPrice").textContent = price + " TL";
-
-    const videoLinkEl = document.getElementById("videoLink");
-    videoLinkEl.href = videoFilename;
-    videoLinkEl.textContent = videoFilename.startsWith("http") ? "İzle" : videoFilename;
+    document.getElementById("videoLink").href = "#";
+    document.getElementById("videoLink").textContent = tempFilename;
 
     function handlePayment() {
       if (parseFloat(price) === 0) {
-        fetch("/save", {
+        // Ücretsizse doğrudan kayıt
+        fetch("/shopier-basarili-yukle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -100,7 +99,7 @@
             deliveryDate,
             sizeMB,
             price,
-            videoFilename,
+            tempFilename
           }),
         })
           .then((res) => res.json())
@@ -118,17 +117,15 @@
             alert("❌ Sunucuya ulaşılamadı.");
           });
       } else {
-        if (!fullname || !email || !price) {
-          alert("Kullanıcı bilgileri eksik. Lütfen geri dönüp formu yeniden doldurun.");
+        if (!fullname || !email || !price || !tempFilename) {
+          alert("Eksik bilgi var. Lütfen formu yeniden doldurun.");
           return;
         }
-
-        console.log("Ödeme bilgisi:", { fullname, email, price });
 
         fetch("/shopier-odeme", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullname, email, price }),
+          body: JSON.stringify({ fullname, email, price, tempFilename }),
         })
           .then((res) => res.text())
           .then((html) => {
