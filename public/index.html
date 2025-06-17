@@ -9,7 +9,7 @@
       background: linear-gradient(135deg, #dbeafe, #e0f2fe);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      overflow: hidden;
+      overflow-x: hidden;
       position: relative;
     }
 
@@ -91,7 +91,7 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       max-width: 500px;
       width: 100%;
-      margin: auto;
+      margin: 20px auto;
       position: relative;
       z-index: 1;
     }
@@ -156,14 +156,55 @@
       50% { opacity: 1; }
       100% { opacity: 0.3; }
     }
+
+    /* Yorumlar Bölümü */
+    .yorumlar-wrapper {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .yorumlar-wrapper h3 {
+      margin-bottom: 15px;
+      color: #1e3a8a;
+    }
+
+    .yorumlar-wrapper form input, .yorumlar-wrapper form textarea {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .yorumlar-wrapper .yorum {
+      border-top: 1px solid #ddd;
+      margin-top: 20px;
+      padding-top: 15px;
+    }
+
+    .yorumlar-wrapper .yorum small {
+      color: gray;
+      font-size: 13px;
+    }
+
+    .yorumlar-wrapper .yorum .delete-btn {
+      float: right;
+      background: none;
+      color: red;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Arkaplan kapsülleri -->
   <div class="background-capsules" id="capsuleContainer"></div>
 
-  <!-- Hover Bilgilendirme Menüsü -->
   <div class="hover-menu-container">
     <div class="hover-btn" data-content="how">📋 Nasıl Çalışır?</div>
     <div class="hover-btn" data-content="why">🔒 Neden Biz?</div>
@@ -191,7 +232,6 @@
     </div>
   </div>
 
-  <!-- Form -->
   <div class="form-container">
     <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
@@ -206,8 +246,23 @@
     </form>
   </div>
 
+  <div class="yorumlar-wrapper">
+    <h3>🗨️ Yorum Yaz</h3>
+    <form id="yorumForm">
+      <input type="text" name="name" placeholder="Adınız" required />
+      <input type="email" name="email" placeholder="E-posta" required />
+      <textarea name="comment" placeholder="Yorumunuz" required></textarea>
+      <label><input type="checkbox" name="showName" checked /> İsmin görünsün</label>
+      <button type="submit">Yorumu Gönder</button>
+    </form>
+
+    <div id="yorumlarListesi">
+      <!-- JavaScript ile doldurulacak -->
+    </div>
+  </div>
+
   <script>
-    // Arkaplan kapsülleri üret
+    // Kapsüller
     const container = document.getElementById("capsuleContainer");
     for (let i = 0; i < 40; i++) {
       const capsule = document.createElement("div");
@@ -220,77 +275,78 @@
       container.appendChild(capsule);
     }
 
-    // Hover kutularını yönet
+    // Hover kutular
     const buttons = document.querySelectorAll('.hover-btn');
     const contents = document.querySelectorAll('.hover-content');
-
     buttons.forEach(btn => {
       btn.addEventListener('mouseenter', () => {
         contents.forEach(content => content.style.display = 'none');
         const target = document.getElementById(btn.dataset.content);
-        if (target) {
-          const rect = btn.getBoundingClientRect();
-          target.style.display = 'block';
-          target.style.left = `${btn.offsetLeft}px`;
-        }
+        if (target) target.style.display = 'block';
       });
     });
-
     document.addEventListener('mousemove', (e) => {
       const isInside = [...buttons, ...contents].some(el => el.contains(e.target));
       if (!isInside) contents.forEach(c => c.style.display = 'none');
     });
 
-    // Form gönderme
+    // Form gönder
     const form = document.getElementById("messageForm");
     const loadingText = document.getElementById("loadingText");
     const submitButton = document.getElementById("submitButton");
-
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-
       const formData = new FormData(form);
-
       submitButton.disabled = true;
       submitButton.textContent = "Gönderiliyor...";
       loadingText.style.display = "block";
-
       try {
-        const response = await fetch("/submit", {
-          method: "POST",
-          body: formData
-        });
-
-        const text = await response.text();
-        let result;
-        try {
-          result = JSON.parse(text);
-        } catch (err) {
-          alert("Sunucudan geçersiz yanıt alındı:\n" + text);
-          return;
-        }
-
-        if (!result.success) {
+        const response = await fetch("/submit", { method: "POST", body: formData });
+        const result = await response.json();
+        if (result.success) {
+          localStorage.setItem("fullname", form.fullname.value);
+          localStorage.setItem("email", form.email.value);
+          localStorage.setItem("phone", form.phone.value);
+          localStorage.setItem("note", form.note.value);
+          localStorage.setItem("deliveryDate", form.deliveryDate.value);
+          localStorage.setItem("sizeMB", result.sizeMB);
+          localStorage.setItem("price", result.price);
+          localStorage.setItem("tempFilename", result.tempFilename);
+          window.location.href = "preview.html";
+        } else {
           alert("❌ Video yüklenemedi:\n" + result.error);
-          return;
         }
-
-        localStorage.setItem("fullname", form.fullname.value);
-        localStorage.setItem("email", form.email.value);
-        localStorage.setItem("phone", form.phone.value);
-        localStorage.setItem("note", form.note.value);
-        localStorage.setItem("deliveryDate", form.deliveryDate.value);
-        localStorage.setItem("sizeMB", result.sizeMB);
-        localStorage.setItem("price", result.price);
-        localStorage.setItem("tempFilename", result.tempFilename);
-
-        window.location.href = "preview.html";
       } catch (err) {
         alert("Sunucuya ulaşılamadı.");
       } finally {
         submitButton.disabled = false;
         submitButton.textContent = "Gönder";
         loadingText.style.display = "none";
+      }
+    });
+
+    // Yorum gönderme
+    const yorumForm = document.getElementById("yorumForm");
+    const yorumlarListesi = document.getElementById("yorumlarListesi");
+    yorumForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const formData = new FormData(yorumForm);
+      const data = Object.fromEntries(formData.entries());
+      data.showName = formData.has("showName");
+      try {
+        const res = await fetch("/yorum-ekle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.success) {
+          window.location.reload();
+        } else {
+          alert("Yorum eklenemedi");
+        }
+      } catch (err) {
+        alert("Sunucu hatası.");
       }
     });
   </script>
