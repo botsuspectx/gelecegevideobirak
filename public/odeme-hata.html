@@ -1,4 +1,3 @@
-<!-- odeme-hata.html -->
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -19,6 +18,23 @@
 <body>
   <h1>❌ Ödeme başarısız oldu</h1>
   <p>İşlem iptal edildi veya bir hata oluştu.</p>
-  <a href="preview.html">Tekrar Deneyin</a>
+  <p>Geçici dosyanız sistemden silindi.</p>
+  <a href="index.html">Başa Dön</a>
+
+  <script>
+    // Tarayıcıdan bilgileri temizle
+    localStorage.removeItem("tempFilename");
+    localStorage.removeItem("fullname");
+    localStorage.removeItem("email");
+    localStorage.removeItem("phone");
+    localStorage.removeItem("note");
+    localStorage.removeItem("deliveryDate");
+    localStorage.removeItem("sizeMB");
+    localStorage.removeItem("price");
+
+    // (İsteğe bağlı) sunucuya temp dosyayı sil komutu gönderilebilir
+    // fetch("/temizle-gecici-dosya", { method: "POST", body: JSON.stringify({ tempFilename }) })
+
+  </script>
 </body>
 </html>
