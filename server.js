@@ -6,59 +6,13 @@ const fs = require("fs");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { uploadToDrive, deleteFromDrive } = require("./googleDriveUploader");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "gizliAnahtar123";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-const crypto = require("crypto");
-
-app.post("/shopier-odeme", (req, res) => {
-  const { fullname, email, price } = req.body;
-
-  const apiKey = process.env.SHOPIER_API_KEY;
-  const secretKey = process.env.SHOPIER_SECRET_KEY;
-
-  const random_id = Date.now().toString();
-  const buyer_name = fullname;
-  const buyer_email = email;
-  const buyer_address = "Adres Yok";
-  const buyer_phone = "05555555555"; // İsteğe bağlı
-
-  const data = {
-    API_key: apiKey,
-    website_index: "1",
-    product_name: "Geleceğe Mesaj Videosu",
-    buyer_name,
-    buyer_surname: "Soyisim",
-    buyer_email,
-    buyer_address,
-    buyer_phone,
-    order_price: price,
-    currency: "TL",
-    platform_order_id: random_id,
-    success_url: "http://localhost:3000/odeme-basarili.html",
-    failure_url: "http://localhost:3000/odeme-hata.html"
-  };
-
-  const ordered = Object.entries(data).sort();
-  const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
-  const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
-
-  const formHTML = `
-    <form action="https://www.shopier.com/ShowProduct/api_pay4.php" method="post" id="shopierForm">
-      ${Object.entries(data)
-        .map(([key, val]) => `<input type="hidden" name="${key}" value="${val}">`)
-        .join("\n")}
-      <input type="hidden" name="signature" value="${signature}">
-    </form>
-    <script>document.getElementById("shopierForm").submit();</script>
-  `;
-
-  res.send(formHTML);
-});
 
 app.use(cors());
 app.use(express.json());
@@ -81,7 +35,57 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 app.use("/uploads", express.static(uploadDir));
 
-// ✅ JWT kontrol middleware
+app.post("/shopier-odeme", (req, res) => {
+  try {
+    const { fullname, email, price } = req.body;
+
+    const apiKey = process.env.SHOPIER_API_KEY;
+    const secretKey = process.env.SHOPIER_SECRET_KEY;
+
+    const random_id = Date.now().toString();
+    const buyer_name = fullname;
+    const buyer_email = email;
+    const buyer_address = "Adres Yok";
+    const buyer_phone = "05555555555";
+
+    const data = {
+      API_key: apiKey,
+      website_index: "1",
+      product_name: "Geleceğe Mesaj Videosu",
+      buyer_name,
+      buyer_surname: "Soyisim",
+      buyer_email,
+      buyer_address,
+      buyer_phone,
+      order_price: price,
+      currency: "TL",
+      platform_order_id: random_id,
+      success_url: "http://localhost:3000/odeme-basarili.html",
+      failure_url: "http://localhost:3000/odeme-hata.html"
+    };
+
+    const ordered = Object.entries(data).sort();
+    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
+    const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
+
+    const formHTML = `
+      <form action="https://www.shopier.com/ShowProduct/api_pay4.php" method="post" id="shopierForm">
+        ${Object.entries(data)
+          .map(([key, val]) => `<input type="hidden" name="${key}" value="${val}">`)
+          .join("\n")}
+        <input type="hidden" name="signature" value="${signature}">
+      </form>
+      <script>document.getElementById("shopierForm").submit();</script>
+    `;
+
+    res.send(formHTML);
+  } catch (err) {
+    console.error("❌ Shopier ödeme hatası:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// JWT middleware
 function authMiddleware(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) return res.status(403).send("⛔ Giriş gerekli");
@@ -94,7 +98,6 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ✅ Admin girişi
 app.post("/admin-login", (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -110,25 +113,20 @@ app.post("/admin-login", (req, res) => {
   }
 });
 
-// ✅ Çıkış
 app.post("/admin-logout", (req, res) => {
   res.clearCookie("admin_token");
   res.json({ success: true });
 });
 
-// ✅ Video gönderimi
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   const { fullname, email } = req.body;
-
   if (!video || !fullname || !email) {
     return res.status(400).json({ success: false, error: "Eksik bilgi veya video." });
   }
 
   try {
-    const { fullname, email } = req.body;
     const driveLink = await uploadToDrive(video.path, video.originalname, fullname, email);
-
     fs.unlink(video.path, () => {});
 
     const sizeMB = video.size / (1024 * 1024);
@@ -151,19 +149,8 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
-// ✅ Veritabanına kayıt
 app.post("/save", (req, res) => {
-  const {
-    fullname,
-    email,
-    phone,
-    note,
-    deliveryDate,
-    sizeMB,
-    price,
-    videoFilename,
-  } = req.body;
-
+  const { fullname, email, phone, note, deliveryDate, sizeMB, price, videoFilename } = req.body;
   const yeniVeri = {
     fullname,
     email,
@@ -175,16 +162,13 @@ app.post("/save", (req, res) => {
     videoFilename,
     timestamp: new Date().toISOString(),
   };
-
   const dbPath = path.join(__dirname, "veriler.json");
   const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-
   currentData.push(yeniVeri);
   fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
   res.json({ success: true });
 });
 
-// ✅ Verileri listele
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -192,7 +176,6 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
-// ✅ Silme işlemi + Google Drive dosyasını kaldır
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
@@ -228,16 +211,14 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) 
     payment_status
   } = req.body;
 
-  // Sadece başarılı ödemeleri al
   if (payment_status !== "success") {
     return res.status(200).send("Ignored non-success status");
   }
 
-  // Kayıt için örnek veri oluştur
   const yeniVeri = {
     fullname: `${buyer_name} ${buyer_surname}`,
     email: buyer_email,
-    phone: "", // webhook ile gelmiyor
+    phone: "",
     note: "Shopier'den gelen kayıt",
     deliveryDate: new Date().toISOString().slice(0, 10),
     sizeMB: "Bilinmiyor",
@@ -245,19 +226,16 @@ app.post("/shopier-webhook", express.urlencoded({ extended: true }), (req, res) 
     videoFilename: "Bilinmiyor (manuel eşleştirme gerekebilir)",
     timestamp: new Date().toISOString(),
     platform_order_id
-
   };
 
   const dbPath = path.join(__dirname, "veriler.json");
   const currentData = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath)) : [];
-
   currentData.push(yeniVeri);
   fs.writeFileSync(dbPath, JSON.stringify(currentData, null, 2));
 
   console.log("✅ Shopier ödemesiyle kayıt eklendi:", yeniVeri.fullname);
   res.status(200).send("OK");
 });
-
 
 app.listen(PORT, () => {
   console.log(`✅ Sunucu çalışıyor: http://localhost:${PORT}`);
