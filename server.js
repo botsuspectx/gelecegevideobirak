@@ -47,7 +47,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ✅ Admin girişi (şifre .env üzerinden)
+// ✅ Admin girişi
 app.post("/admin-login", (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -72,10 +72,14 @@ app.post("/admin-logout", (req, res) => {
 // ✅ Video gönderimi
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
-  if (!video) return res.status(400).json({ success: false, error: "Video yüklenemedi." });
+  const { fullname, email } = req.body;
+
+  if (!video || !fullname || !email) {
+    return res.status(400).json({ success: false, error: "Eksik bilgi veya video." });
+  }
 
   try {
-    const driveLink = await uploadToDrive(video.path, video.originalname);
+    const driveLink = await uploadToDrive(video.path, video.originalname, fullname, email);
     fs.unlink(video.path, () => {});
 
     const sizeMB = video.size / (1024 * 1024);
@@ -98,7 +102,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 });
 
-// ✅ Kayıt veritabanına yaz
+// ✅ Veritabanına kayıt
 app.post("/save", (req, res) => {
   const {
     fullname,
@@ -131,7 +135,7 @@ app.post("/save", (req, res) => {
   res.json({ success: true });
 });
 
-// ✅ Verileri listele (JWT korumalı)
+// ✅ Verileri listele
 app.get("/veriler", authMiddleware, (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.json([]);
@@ -139,7 +143,7 @@ app.get("/veriler", authMiddleware, (req, res) => {
   res.json(data);
 });
 
-// ✅ Kayıt + Drive videosunu sil (JWT korumalı)
+// ✅ Silme işlemi + Google Drive dosyasını kaldır
 app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
   const dbPath = path.join(__dirname, "veriler.json");
   if (!fs.existsSync(dbPath)) return res.status(404).json({ success: false });
@@ -161,7 +165,6 @@ app.delete("/veriler/:timestamp", authMiddleware, async (req, res) => {
 
   const yeniVeri = data.filter(item => item.timestamp !== req.params.timestamp);
   fs.writeFileSync(dbPath, JSON.stringify(yeniVeri, null, 2));
-
   res.json({ success: true });
 });
 
