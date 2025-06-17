@@ -1,4 +1,5 @@
 const path = require("path");
+require("dotenv").config();
 const { google } = require("googleapis");
 const fs = require("fs");
 
@@ -25,11 +26,11 @@ if (fs.existsSync(TOKEN_PATH)) {
 const drive = google.drive({ version: "v3", auth: oAuth2Client });
 
 // 🚀 Dosyayı Drive'a yükle
-async function uploadToDrive(filepath, filename) {
-  const fileMetadata = {
-    name: filename,
-    parents: ["root"],
-  };
+const fileMetadata = {
+  name: filename,
+  parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+};
+
 
   const media = {
     mimeType: "video/mp4",
