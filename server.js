@@ -178,30 +178,25 @@ app.post("/shopier-basarili-yukle", async (req, res) => {
     tempFilename
   } = req.body;
 
+  if (!fullname || !email || !tempFilename) {
+    return res.status(400).json({ success: false, error: "Kullanıcı bilgileri veya video eksik." });
+  }
+
   const videoPath = path.join(__dirname, "uploads", tempFilename);
 
   try {
     const driveLink = await uploadToDrive(videoPath, tempFilename, fullname, email);
-    fs.unlink(videoPath, () => {}); // Sunucudan sil
+    fs.unlink(videoPath, () => {}); // geçici dosyayı sil
 
-    const yeniVeri = {
-      fullname,
-      email,
-      phone,
-      note,
-      deliveryDate,
-      sizeMB,
-      price,
-      videoFilename: driveLink,
-      timestamp: new Date().toISOString(),
-    };
+    // Sadece aşağıdaki satır olmalı
+    res.json({ success: true, videoFilename: driveLink });
 
-    res.json({ success: true });
   } catch (err) {
     console.error("❌ Drive yükleme hatası:", err);
     res.status(500).json({ success: false, error: "Yükleme başarısız." });
   }
 });
+ // Sunucudan sil
 
 // Kayıt kaydetme
 app.post("/save", async (req, res) => {
