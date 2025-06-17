@@ -73,7 +73,7 @@
     const deliveryDate = localStorage.getItem("deliveryDate") || "";
     const sizeMB = localStorage.getItem("sizeMB") || "0";
     const price = localStorage.getItem("price") || "0";
-    const tempFilename = localStorage.getItem("tempFilename") || "#";
+    const tempFilename = localStorage.getItem("tempFilename") || "";
 
     document.getElementById("name").textContent = fullname;
     document.getElementById("email").textContent = email;
@@ -82,12 +82,16 @@
     document.getElementById("deliveryDate").textContent = deliveryDate;
     document.getElementById("videoSize").textContent = sizeMB + " MB";
     document.getElementById("videoPrice").textContent = price + " TL";
-    document.getElementById("videoLink").href = "#";
     document.getElementById("videoLink").textContent = tempFilename;
 
     function handlePayment() {
+      if (!fullname || !email || !tempFilename) {
+        alert("Kullanıcı bilgileri veya video eksik.");
+        return;
+      }
+
       if (parseFloat(price) === 0) {
-        // Ücretsizse doğrudan kayıt
+        // Ücretsizse Drive’a yükle ve kayıt et
         fetch("/shopier-basarili-yukle", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -102,36 +106,53 @@
             tempFilename
           }),
         })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success) {
-              alert("✅ Mesajınız başarıyla gönderildi!");
-              localStorage.clear();
-              window.location.href = "index.html";
-            } else {
-              alert("❌ Kayıt başarısız!");
-            }
-          })
-          .catch((err) => {
-            console.error("❌ Kayıt hatası:", err);
-            alert("❌ Sunucuya ulaşılamadı.");
-          });
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.videoFilename) {
+            return fetch("/save", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fullname,
+                email,
+                phone,
+                note,
+                deliveryDate,
+                sizeMB,
+                price,
+                videoFilename: data.videoFilename
+              })
+            });
+          } else {
+            throw new Error("Drive yüklemesi başarısız.");
+          }
+        })
+        .then(res => res.json())
+        .then(saveResp => {
+          if (saveResp.success) {
+            alert("✅ Mesajınız başarıyla gönderildi!");
+            localStorage.clear();
+            window.location.href = "index.html";
+          } else {
+            alert("❌ Kayıt hatası!");
+          }
+        })
+        .catch(err => {
+          console.error("❌ Hata:", err);
+          alert("Bir hata oluştu.");
+        });
       } else {
-        if (!fullname || !email || !price || !tempFilename) {
-          alert("Eksik bilgi var. Lütfen formu yeniden doldurun.");
-          return;
-        }
-
+        // Ücretliyse Shopier yönlendirmesi
         fetch("/shopier-odeme", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fullname, email, price, tempFilename }),
         })
-          .then((res) => res.text())
-          .then((html) => {
-            document.write(html);
-          })
-          .catch(() => alert("Ödeme başlatılamadı."));
+        .then((res) => res.text())
+        .then((html) => {
+          document.write(html);
+        })
+        .catch(() => alert("Ödeme başlatılamadı."));
       }
     }
   </script>
