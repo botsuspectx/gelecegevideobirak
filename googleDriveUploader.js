@@ -28,7 +28,7 @@ const drive = google.drive({ version: "v3", auth: oAuth2Client });
 async function uploadToDrive(filepath, filename) {
   const fileMetadata = {
     name: filename,
-    parents: ["root"], // klasör ID belirtmek istersen burayı değiştir
+    parents: ["root"],
   };
 
   const media = {
@@ -45,7 +45,6 @@ async function uploadToDrive(filepath, filename) {
 
     const fileId = file.data.id;
 
-    // Linki herkesle paylaşılabilir yap
     await drive.permissions.create({
       fileId,
       requestBody: {
@@ -53,7 +52,18 @@ async function uploadToDrive(filepath, filename) {
         type: "anyone",
       },
     });
-    async function deleteFromDrive(fileId) {
+
+    const publicLink = `https://drive.google.com/file/d/${fileId}/view`;
+    return publicLink;
+
+  } catch (error) {
+    console.error("❌ Dosya yüklenemedi:", error.message);
+    throw new Error("Google Drive yükleme hatası");
+  }
+}
+
+// 🗑 Dosyayı Drive'dan sil
+async function deleteFromDrive(fileId) {
   try {
     await drive.files.delete({ fileId });
     console.log(`🗑 Drive dosyası silindi: ${fileId}`);
@@ -66,15 +76,3 @@ module.exports = {
   uploadToDrive,
   deleteFromDrive
 };
-
-
-    const publicLink = `https://drive.google.com/file/d/${fileId}/view`;
-    return publicLink;
-
-  } catch (error) {
-    console.error("❌ Dosya yüklenemedi:", error.message);
-    throw new Error("Google Drive yükleme hatası");
-  }
-}
-
-module.exports = { uploadToDrive };
