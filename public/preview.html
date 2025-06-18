@@ -86,6 +86,14 @@
       cursor: not-allowed;
     }
 
+    #successMessage {
+      margin-top: 15px;
+      color: #16a34a;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+
     @media (max-width: 600px) {
       .preview-container {
         margin: 20px;
@@ -111,6 +119,7 @@
     <video id="previewVideo" controls></video>
 
     <button id="sendBtn">Gönder</button>
+    <div id="successMessage">🎉 Mesaj başarıyla kaydedildi!</div>
   </div>
 
   <script>
@@ -127,6 +136,8 @@
     }
 
     const sendBtn = document.getElementById("sendBtn");
+    const successMessage = document.getElementById("successMessage");
+
     sendBtn.addEventListener("click", async () => {
       sendBtn.disabled = true;
       sendBtn.textContent = "Gönderiliyor...";
@@ -165,23 +176,22 @@
 
         const saveResult = await save.json();
         if (saveResult.success) {
-          alert("🎉 Mesaj başarıyla kaydedildi!");
+          successMessage.style.display = "block";
           localStorage.clear();
-          window.location.href = "index.html";
         } else {
           alert("Kayıt başarısız!");
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Gönder";
         }
 
       } catch (err) {
         alert("❌ Sunucu hatası");
         console.error(err);
-      } finally {
         sendBtn.disabled = false;
         sendBtn.textContent = "Gönder";
       }
     });
 
-    // Bilgileri doldur
     document.getElementById("fullname").textContent = localStorage.getItem("fullname") || "-";
     document.getElementById("email").textContent = localStorage.getItem("email") || "-";
     document.getElementById("phone").textContent = localStorage.getItem("phone") || "-";
@@ -190,7 +200,6 @@
     document.getElementById("sizeMB").textContent = localStorage.getItem("sizeMB") || "-";
     document.getElementById("price").textContent = localStorage.getItem("price") || "-";
 
-    // Video yükle
     const videoEl = document.getElementById("previewVideo");
     const filename = localStorage.getItem("tempFilename");
     if (filename) {
