@@ -6,59 +6,32 @@
   <title>Gönderim Önizlemesi</title>
   <style>
     body {
-      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      background: #f0f4f8;
       font-family: sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      min-height: 100vh;
+      padding: 40px 20px;
       margin: 0;
-      overflow: hidden;
     }
-
-    .background-capsules {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      overflow: hidden;
-    }
-
-    .capsule {
-      position: absolute;
-      width: 40px;
-      height: 16px;
-      border-radius: 20px;
-      background: rgba(59, 130, 246, 0.3);
-      animation: float linear infinite;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 1; }
-      100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
-    }
-
     .card {
       background: white;
       padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       max-width: 500px;
       width: 100%;
-      z-index: 1;
+      box-sizing: border-box;
     }
-
     h2 {
-      color: #263159;
-      text-align: center;
+      color: #495579;
+      margin-top: 0;
     }
-
     p {
       margin: 10px 0;
+      font-size: 16px;
+      word-break: break-word;
     }
-
     .btn {
       margin-top: 15px;
       padding: 12px 20px;
@@ -68,44 +41,36 @@
       cursor: pointer;
       width: 100%;
     }
-
     .btn-back {
       background-color: #aaa;
       color: white;
     }
-
     .btn-pay {
       background-color: #263159;
       color: white;
     }
-
     .btn:hover {
       opacity: 0.9;
     }
 
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    #feedback {
-      margin-top: 15px;
-      font-weight: bold;
-      text-align: center;
-    }
-
-    .success {
-      color: green;
-    }
-
-    .error {
-      color: red;
+    @media (max-width: 480px) {
+      .card {
+        padding: 20px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      p {
+        font-size: 14px;
+      }
+      .btn {
+        font-size: 14px;
+        padding: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="background-capsules" id="capsuleContainer"></div>
-
   <div class="card">
     <h2>📦 Gönderim Önizlemesi</h2>
     <p><strong>İsim:</strong> <span id="name"></span></p>
@@ -115,12 +80,10 @@
     <p><strong>Teslim Tarihi:</strong> <span id="deliveryDate"></span></p>
     <p><strong>Video Boyutu:</strong> <span id="videoSize"></span></p>
     <p><strong>Ücret:</strong> <span id="videoPrice"></span></p>
-    <p><strong>Video:</strong> <span id="videoLink"></span></p>
+    <p><strong>Video:</strong> <a id="videoLink" href="#" target="_blank">İzle</a></p>
 
     <button class="btn btn-back" onclick="window.location.href='index.html'">Geri Dön ve Düzenle</button>
-    <button class="btn btn-pay" id="sendBtn" onclick="handlePayment()">Ödeme Yap ve Gönder</button>
-
-    <div id="feedback"></div>
+    <button class="btn btn-pay" onclick="handlePayment()">Ödeme Yap ve Gönder</button>
   </div>
 
   <script>
@@ -131,7 +94,7 @@
     const deliveryDate = localStorage.getItem("deliveryDate") || "";
     const sizeMB = localStorage.getItem("sizeMB") || "0";
     const price = localStorage.getItem("price") || "0";
-    const tempFilename = localStorage.getItem("tempFilename") || "";
+    const videoFilename = localStorage.getItem("videoFilename") || "#";
 
     document.getElementById("name").textContent = fullname;
     document.getElementById("email").textContent = email;
@@ -140,28 +103,14 @@
     document.getElementById("deliveryDate").textContent = deliveryDate;
     document.getElementById("videoSize").textContent = sizeMB + " MB";
     document.getElementById("videoPrice").textContent = price + " TL";
-    document.getElementById("videoLink").textContent = tempFilename;
 
-    const feedbackEl = document.getElementById("feedback");
-    const sendBtn = document.getElementById("sendBtn");
-
-    function showFeedback(message, isSuccess) {
-      feedbackEl.textContent = message;
-      feedbackEl.className = isSuccess ? "success" : "error";
-    }
+    const videoLinkEl = document.getElementById("videoLink");
+    videoLinkEl.href = videoFilename;
+    videoLinkEl.textContent = videoFilename.startsWith("http") ? "İzle" : videoFilename;
 
     function handlePayment() {
-      if (!fullname || !email || !tempFilename) {
-        showFeedback("Kullanıcı bilgileri veya video eksik.", false);
-        return;
-      }
-
       if (parseFloat(price) === 0) {
-        // Ücretsizse Drive’a yükle ve kayıt et
-        sendBtn.disabled = true;
-        showFeedback("⏳ Gönderiliyor, lütfen bekleyiniz...", true);
-
-        fetch("/shopier-basarili-yukle", {
+        fetch("/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -172,73 +121,26 @@
             deliveryDate,
             sizeMB,
             price,
-            tempFilename
+            videoFilename,
           }),
         })
         .then(res => res.json())
         .then(data => {
-          if (data.success && data.videoFilename) {
-            return fetch("/save", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                fullname,
-                email,
-                phone,
-                note,
-                deliveryDate,
-                sizeMB,
-                price,
-                videoFilename: data.videoFilename
-              })
-            });
-          } else {
-            throw new Error("Drive yüklemesi başarısız.");
-          }
-        })
-        .then(res => res.json())
-        .then(saveResp => {
-          if (saveResp.success) {
-            showFeedback("✅ Mesaj başarıyla gönderildi.", true);
+          if (data.success) {
+            alert("✅ Mesajınız başarıyla gönderildi!");
             localStorage.clear();
-            sendBtn.disabled = true;
-            sendBtn.textContent = "Gönderildi";
+            window.location.href = "index.html";
           } else {
-            sendBtn.disabled = false;
-            showFeedback("❌ Kayıt sırasında hata oluştu.", false);
+            alert("❌ Kayıt başarısız!");
           }
         })
         .catch(err => {
-          console.error("❌ Hata:", err);
-          sendBtn.disabled = false;
-          showFeedback("❌ Hata: " + err.message, false);
+          console.error("❌ Kayıt hatası:", err);
+          alert("❌ Sunucuya ulaşılamadı.");
         });
       } else {
-        // Ücretliyse Shopier yönlendirmesi
-        fetch("/shopier-odeme", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullname, email, price, tempFilename }),
-        })
-        .then((res) => res.text())
-        .then((html) => {
-          document.write(html);
-        })
-        .catch(() => showFeedback("Ödeme başlatılamadı.", false));
+        alert("💳 Bu video ücretli. Ödeme sistemi entegre edilince aktif olacaktır.");
       }
-    }
-
-    // Kapsülleri üret
-    const container = document.getElementById("capsuleContainer");
-    for (let i = 0; i < 40; i++) {
-      const capsule = document.createElement("div");
-      capsule.classList.add("capsule");
-      capsule.style.left = Math.random() * 100 + "vw";
-      capsule.style.top = Math.random() * 100 + "vh";
-      capsule.style.backgroundColor = `rgba(59, 130, 246, ${Math.random() * 0.4 + 0.1})`;
-      capsule.style.animationDuration = (Math.random() * 20 + 10) + "s";
-      capsule.style.animationDelay = (Math.random() * 10) + "s";
-      container.appendChild(capsule);
     }
   </script>
 </body>
