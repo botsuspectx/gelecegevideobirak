@@ -100,14 +100,33 @@
     font-size: 16px;
   }
 }
-    #emailRow {
+    .email-verification {
   display: flex;
   gap: 10px;
-  align-items: center;
+  margin-top: 12px;
 }
-#emailRow input {
+.email-verification input[type="email"] {
   flex: 1;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
 }
+.email-verification button {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background-color: #2563eb;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.email-verification button:hover {
+  background-color: #1d4ed8;
+}
+
 #verificationCode, #timerText {
   display: none;
   margin-top: 10px;
@@ -167,7 +186,7 @@
     <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
       <input type="text" name="fullname" placeholder="İsim Soyisim" required>
-      <div id="emailRow">
+      <div class="email-verification">
   <input type="email" id="email" name="email" placeholder="E-posta" required>
   <button type="button" id="sendCodeBtn">Kod Gönder</button>
 </div>
