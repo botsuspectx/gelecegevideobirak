@@ -15,7 +15,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^6.9.0",
-    "mongoose": "^7.6.3"
+    "mongoose": "^7.6.3",
     "node-fetch": "^2.6.9"
   }
 }
