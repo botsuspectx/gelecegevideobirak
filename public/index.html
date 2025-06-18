@@ -100,6 +100,25 @@
     font-size: 16px;
   }
 }
+    #emailRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+#emailRow input {
+  flex: 1;
+}
+#verificationCode, #timerText {
+  display: none;
+  margin-top: 10px;
+}
+#verificationCode {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+  width: 100%;
+}
+
 
   </style>
 </head>
@@ -148,7 +167,13 @@
     <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
     <form id="messageForm" enctype="multipart/form-data">
       <input type="text" name="fullname" placeholder="İsim Soyisim" required>
-      <input type="email" name="email" placeholder="E-posta" required>
+      <div id="emailRow">
+  <input type="email" id="email" name="email" placeholder="E-posta" required>
+  <button type="button" id="sendCodeBtn">Kod Gönder</button>
+</div>
+<small id="timerText" style="color: gray; display: none;"></small>
+<input type="text" id="verificationCode" placeholder="Gelen doğrulama kodunu girin" style="display: none;" />
+
       <input type="tel" name="phone" placeholder="Telefon (isteğe bağlı)">
       <textarea name="note" placeholder="Notun:" rows="4" required></textarea>
       <input type="date" name="deliveryDate" required>
@@ -203,6 +228,11 @@
     const submitButton = document.getElementById("submitButton");
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
+      if (!emailVerified) {
+  alert("Lütfen e-posta adresinize gelen doğrulama kodunu girin.");
+  return;
+}
+
       const formData = new FormData(form);
       submitButton.disabled = true;
       submitButton.textContent = "Gönderiliyor...";
@@ -287,6 +317,71 @@ yorumForm.addEventListener("submit", async function (e) {
     }
 
     window.addEventListener("DOMContentLoaded", yorumlariGetir);
+
+    let sentCode = "";
+let emailVerified = false;
+let timerInterval;
+
+document.getElementById("sendCodeBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  if (!email.includes("@")) return alert("Lütfen geçerli bir e-posta girin.");
+
+  document.getElementById("sendCodeBtn").disabled = true;
+  document.getElementById("sendCodeBtn").textContent = "Gönderildi";
+  document.getElementById("timerText").style.display = "inline";
+
+  try {
+    const res = await fetch("/email-dogrula", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const result = await res.json();
+    if (result.success) {
+      sentCode = result.code;
+      emailVerified = false;
+      document.getElementById("verificationCode").style.display = "block";
+      startCountdown(60);
+    } else {
+      alert("Kod gönderilemedi.");
+      resetCodeButton();
+    }
+  } catch {
+    alert("Sunucu hatası");
+    resetCodeButton();
+  }
+});
+
+function resetCodeButton() {
+  document.getElementById("sendCodeBtn").disabled = false;
+  document.getElementById("sendCodeBtn").textContent = "Kod Gönder";
+  document.getElementById("timerText").style.display = "none";
+  clearInterval(timerInterval);
+}
+
+function startCountdown(seconds) {
+  let remaining = seconds;
+  timerInterval = setInterval(() => {
+    if (remaining <= 0) {
+      resetCodeButton();
+      return;
+    }
+    document.getElementById("timerText").textContent = `Yeniden kod gönderilebilir: ${remaining} sn`;
+    remaining--;
+  }, 1000);
+}
+
+document.getElementById("verificationCode").addEventListener("input", function () {
+  if (this.value === sentCode) {
+    emailVerified = true;
+    this.style.borderColor = "green";
+  } else {
+    emailVerified = false;
+    this.style.borderColor = "red";
+  }
+});
+
+    
   </script>
 </body>
 </html>
