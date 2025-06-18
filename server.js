@@ -421,7 +421,7 @@ app.post("/email-dogrula", async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: '"Geleceğe Mesaj" <mansurkuddar0001@gmail.com>',
+      from: '"Geleceğe Video Gönder" <mansurkuddar0001@gmail.com>',
       to: email,
       subject: "E-posta Doğrulama Kodunuz",
       text: `Geleceğe Mesaj hizmeti için doğrulama kodunuz: ${code}`
