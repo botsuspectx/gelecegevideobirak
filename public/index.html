@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Geleceğe Mesaj</title>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
+    /* Mevcut tüm CSS (kapsüller, hover menü, form, yorum alanı vs.) */
     body {
       background: linear-gradient(135deg, #dbeafe, #e0f2fe);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12,182 +14,62 @@
       overflow-x: hidden;
       position: relative;
     }
-
-    .background-capsules {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      overflow: hidden;
-    }
-
-    .capsule {
-      position: absolute;
-      width: 40px;
-      height: 16px;
-      border-radius: 20px;
-      background: rgba(59, 130, 246, 0.3);
-      animation: float linear infinite;
-    }
-
+    .background-capsules { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .capsule { position: absolute; width: 40px; height: 16px; border-radius: 20px; background: rgba(59, 130, 246, 0.3); animation: float linear infinite; }
     @keyframes float {
       0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
       10% { opacity: 1; }
       100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
     }
-
     .hover-menu-container {
-      display: flex;
-      gap: 12px;
-      padding: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
+      display: flex; gap: 12px; padding: 20px; justify-content: center; flex-wrap: wrap;
     }
-
     .hover-btn {
-      background-color: #2563eb;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 9999px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s ease;
-      position: relative;
+      background-color: #2563eb; color: white; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-weight: bold;
+      transition: background 0.3s ease; position: relative;
     }
-
-    .hover-btn:hover {
-      background-color: #1d4ed8;
-    }
-
+    .hover-btn:hover { background-color: #1d4ed8; }
     .hover-content {
-      position: absolute;
-      top: 50px;
-      background-color: white;
-      color: #1e293b;
-      border-radius: 12px;
-      padding: 15px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: none;
-      width: 250px;
-      z-index: 999;
+      position: absolute; top: 50px; background-color: white; color: #1e293b; border-radius: 12px;
+      padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; width: 250px; z-index: 999;
     }
-
-    .hover-content ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .hover-content li {
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
+    .hover-content ul { list-style: none; padding: 0; margin: 0; }
+    .hover-content li { margin-bottom: 8px; font-size: 14px; }
 
     .form-container {
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-      width: 100%;
-      margin: 20px auto;
-      position: relative;
-      z-index: 1;
+      background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      max-width: 500px; width: 100%; margin: 20px auto; position: relative; z-index: 1;
     }
-
     .form-container::before {
-      content: "";
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      bottom: -10px;
-      left: -10px;
-      z-index: -1;
-      background: linear-gradient(135deg, #60a5fa, #3b82f6);
-      border-radius: 25px;
-      filter: blur(20px);
-      opacity: 0.2;
+      content: ""; position: absolute; top: -10px; right: -10px; bottom: -10px; left: -10px;
+      z-index: -1; background: linear-gradient(135deg, #60a5fa, #3b82f6);
+      border-radius: 25px; filter: blur(20px); opacity: 0.2;
     }
-
     input, textarea {
-      width: 100%;
-      padding: 12px;
-      margin-top: 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      font-size: 14px;
+      width: 100%; padding: 12px; margin-top: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px;
     }
-
     button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background-color: #2563eb;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
+      margin-top: 20px; width: 100%; padding: 12px; background-color: #2563eb;
+      color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer;
       transition: background-color 0.3s ease;
     }
-
-    button:hover:not(:disabled) {
-      background-color: #1d4ed8;
-    }
-
-    button:disabled {
-      background-color: #94a3b8;
-      cursor: not-allowed;
-    }
-
-    #loadingText {
-      display: none;
-      text-align: center;
-      margin-top: 15px;
-      font-style: italic;
-      color: #475569;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
-    }
+    button:hover:not(:disabled) { background-color: #1d4ed8; }
+    button:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    #loadingText { display: none; text-align: center; margin-top: 15px; font-style: italic; color: #475569; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% {opacity: 0.3;} 50% {opacity: 1;} 100% {opacity: 0.3;} }
 
     .yorumlar-wrapper {
-      max-width: 600px;
-      margin: 40px auto;
-      background: white;
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      max-width: 600px; margin: 40px auto; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-
-    .yorumlar-wrapper h3 {
-      margin-bottom: 15px;
-      color: #1e3a8a;
-    }
-
+    .yorumlar-wrapper h3 { margin-bottom: 15px; color: #1e3a8a; }
     .yorumlar-wrapper form input, .yorumlar-wrapper form textarea {
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      width: 100%; margin-top: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 8px;
     }
-
     .yorumlar-wrapper .yorum {
-      border-top: 1px solid #ddd;
-      margin-top: 20px;
-      padding-top: 15px;
+      border-top: 1px solid #ddd; margin-top: 20px; padding-top: 15px;
     }
-
     .yorumlar-wrapper .yorum small {
-      color: gray;
-      font-size: 13px;
+      color: gray; font-size: 13px;
     }
   </style>
 </head>
@@ -231,6 +113,7 @@
       <textarea name="note" placeholder="Notun:" rows="4" required></textarea>
       <input type="date" name="deliveryDate" required>
       <input type="file" name="video" accept="video/*" required>
+      <div class="g-recaptcha" data-sitekey="6Le0jWQrAAAAAKXoUlk1MXWp8E1f7FmiRWsLaxtq" style="margin-top: 10px;"></div>
       <button type="submit" id="submitButton">Gönder</button>
       <div id="loadingText">⏳ Video yükleniyor, lütfen bekleyiniz...</div>
     </form>
@@ -243,14 +126,13 @@
       <input type="email" name="email" placeholder="E-posta" required />
       <textarea name="comment" placeholder="Yorumunuz" required></textarea>
       <label><input type="checkbox" name="showName" checked /> İsmin görünsün</label>
+      <div class="g-recaptcha" data-sitekey="6Le0jWQrAAAAAKXoUlk1MXWp8E1f7FmiRWsLaxtq" style="margin-top: 10px;"></div>
       <button type="submit">Yorumu Gönder</button>
     </form>
-
     <div id="yorumlarListesi"></div>
   </div>
 
   <script>
-    // Arkaplan kapsülleri
     const container = document.getElementById("capsuleContainer");
     for (let i = 0; i < 40; i++) {
       const capsule = document.createElement("div");
@@ -263,7 +145,6 @@
       container.appendChild(capsule);
     }
 
-    // Hover içerikleri
     const buttons = document.querySelectorAll('.hover-btn');
     const contents = document.querySelectorAll('.hover-content');
     buttons.forEach(btn => {
@@ -278,7 +159,6 @@
       if (!isInside) contents.forEach(c => c.style.display = 'none');
     });
 
-    // Form gönder
     const form = document.getElementById("messageForm");
     const loadingText = document.getElementById("loadingText");
     const submitButton = document.getElementById("submitButton");
@@ -313,13 +193,21 @@
       }
     });
 
-    // Yorum gönderme
     const yorumForm = document.getElementById("yorumForm");
     yorumForm.addEventListener("submit", async function (e) {
       e.preventDefault();
+
+      const captchaToken = grecaptcha.getResponse();
+      if (!captchaToken) {
+        alert("Lütfen robot olmadığınızı doğrulayın.");
+        return;
+      }
+
       const formData = new FormData(yorumForm);
       const data = Object.fromEntries(formData.entries());
       data.showName = formData.has("showName");
+      data["g-recaptcha-response"] = captchaToken;
+
       try {
         const res = await fetch("/yorum-ekle", {
           method: "POST",
@@ -329,23 +217,22 @@
         const result = await res.json();
         if (result.success) {
           yorumForm.reset();
+          grecaptcha.reset();
           yorumlariGetir();
         } else {
-          alert("Yorum eklenemedi");
+          alert("Yorum eklenemedi: " + result.message);
         }
       } catch (err) {
         alert("Sunucu hatası.");
       }
     });
 
-    // Yorumları listele
     async function yorumlariGetir() {
       try {
         const res = await fetch("/yorumlar");
         const yorumlar = await res.json();
         const liste = document.getElementById("yorumlarListesi");
         liste.innerHTML = "";
-
         yorumlar.reverse().forEach(y => {
           const yorum = document.createElement("div");
           yorum.classList.add("yorum");
