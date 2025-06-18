@@ -1,4 +1,5 @@
 require("dotenv").config();
+const fetch = require("node-fetch");
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -324,13 +325,36 @@ app.post("/temizle-gecici-dosya", (req, res) => {
   });
 });
 
-app.post("/yorum-ekle", (req, res) => {
-  const { name, email, comment, showName } = req.body;
+app.post("/yorum-ekle", async (req, res) => {
+  const { name, email, comment, showName, "g-recaptcha-response": token } = req.body;
 
-  if (!name || !email || !comment) {
-    return res.status(400).json({ success: false, message: "Gerekli alanlar eksik." });
+  if (!name || !email || !comment || !token) {
+    return res.status(400).json({ success: false, message: "Gerekli alanlar eksik veya doğrulama yapılmadı." });
   }
 
+  // ✅ Google reCAPTCHA doğrulaması
+  try {
+    const verifyURL = `https://www.google.com/recaptcha/api/siteverify`;
+    const params = new URLSearchParams();
+    params.append("secret", process.env.RECAPTCHA_SECRET);
+    params.append("response", token);
+
+    const response = await fetch(verifyURL, {
+      method: "POST",
+      body: params
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return res.status(400).json({ success: false, message: "reCAPTCHA doğrulaması başarısız." });
+    }
+  } catch (err) {
+    console.error("❌ reCAPTCHA doğrulama hatası:", err);
+    return res.status(500).json({ success: false, message: "Doğrulama sırasında hata oluştu." });
+  }
+
+  // ✅ Yorum kaydetme işlemi
   const yeniYorum = {
     name: name.trim(),
     email: email.trim(),
@@ -351,6 +375,7 @@ app.post("/yorum-ekle", (req, res) => {
 
   res.json({ success: true });
 });
+
 
 app.get("/yorumlar", (req, res) => {
   const yorumDosyasi = path.join(__dirname, "yorumlar.json");
