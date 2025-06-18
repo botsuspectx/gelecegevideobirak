@@ -1,4 +1,5 @@
 require("dotenv").config();
+const nodemailer = require("nodemailer");
 const fetch = require("node-fetch");
 const express = require("express");
 const multer = require("multer");
@@ -399,6 +400,40 @@ app.delete("/yorumlar/:timestamp", (req, res) => {
   fs.writeFileSync(yorumDosyasi, JSON.stringify(yeniYorumlar, null, 2));
   res.json({ success: true });
 });
+
+app.post("/email-dogrula", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || !email.includes("@")) {
+    return res.json({ success: false, message: "Geçerli bir e-posta girilmedi." });
+  }
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6 haneli kod
+
+  // Gmail SMTP ayarı
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "mansurkuddar0001@gmail.com",         // ← senin gmail adresin
+      pass: "kftp wkud atki ixkh"                 // ← Google uygulama şifresi
+    }
+  });
+
+  try {
+    await transporter.sendMail({
+      from: '"Geleceğe Mesaj" <mansurkuddar0001@gmail.com>',
+      to: email,
+      subject: "E-posta Doğrulama Kodunuz",
+      text: `Geleceğe Mesaj hizmeti için doğrulama kodunuz: ${code}`
+    });
+
+    res.json({ success: true, code });
+  } catch (err) {
+    console.error("❌ Mail gönderilemedi:", err);
+    res.json({ success: false, message: "Kod gönderilemedi." });
+  }
+});
+
 
 
 app.listen(PORT, () => {
