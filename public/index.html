@@ -113,7 +113,6 @@
       <textarea name="note" placeholder="Notun:" rows="4" required></textarea>
       <input type="date" name="deliveryDate" required>
       <input type="file" name="video" accept="video/*" required>
-      <div class="g-recaptcha" data-sitekey="6Le0jWQrAAAAAKXoUlk1MXWp8E1f7FmiRWsLaxtq" style="margin-top: 10px;"></div>
       <button type="submit" id="submitButton">Gönder</button>
       <div id="loadingText">⏳ Video yükleniyor, lütfen bekleyiniz...</div>
     </form>
@@ -194,38 +193,38 @@
     });
 
     const yorumForm = document.getElementById("yorumForm");
-    yorumForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
+yorumForm.addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const formData = new FormData(yorumForm);
+  const data = Object.fromEntries(formData.entries());
+  data.showName = formData.has("showName");
 
-      const captchaToken = grecaptcha.getResponse();
-      if (!captchaToken) {
-        alert("Lütfen robot olmadığınızı doğrulayın.");
-        return;
-      }
+  const token = grecaptcha.getResponse();
+  if (!token) {
+    alert("Lütfen reCAPTCHA doğrulamasını tamamlayın.");
+    return;
+  }
+  data["g-recaptcha-response"] = token;
 
-      const formData = new FormData(yorumForm);
-      const data = Object.fromEntries(formData.entries());
-      data.showName = formData.has("showName");
-      data["g-recaptcha-response"] = captchaToken;
-
-      try {
-        const res = await fetch("/yorum-ekle", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (result.success) {
-          yorumForm.reset();
-          grecaptcha.reset();
-          yorumlariGetir();
-        } else {
-          alert("Yorum eklenemedi: " + result.message);
-        }
-      } catch (err) {
-        alert("Sunucu hatası.");
-      }
+  try {
+    const res = await fetch("/yorum-ekle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
     });
+    const result = await res.json();
+    if (result.success) {
+      yorumForm.reset();
+      grecaptcha.reset(); // captcha sıfırlama
+      yorumlariGetir();
+    } else {
+      alert("Yorum eklenemedi: " + result.message);
+    }
+  } catch (err) {
+    alert("Sunucu hatası.");
+  }
+});
+
 
     async function yorumlariGetir() {
       try {
