@@ -86,11 +86,14 @@
       cursor: not-allowed;
     }
 
-    #successMessage {
-      margin-top: 15px;
-      color: #16a34a;
-      font-weight: bold;
+    .success-message {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #d1fae5;
+      color: #065f46;
       text-align: center;
+      border-radius: 10px;
+      font-weight: bold;
       display: none;
     }
 
@@ -119,10 +122,11 @@
     <video id="previewVideo" controls></video>
 
     <button id="sendBtn">Gönder</button>
-    <div id="successMessage">🎉 Mesaj başarıyla kaydedildi!</div>
+    <div class="success-message" id="successMessage">🎉 Mesaj başarıyla kaydedildi!</div>
   </div>
 
   <script>
+    // Arkaplan kapsülleri
     const container = document.getElementById("capsuleContainer");
     for (let i = 0; i < 40; i++) {
       const capsule = document.createElement("div");
@@ -135,6 +139,24 @@
       container.appendChild(capsule);
     }
 
+    // Bilgileri göster
+    document.getElementById("fullname").textContent = localStorage.getItem("fullname") || "-";
+    document.getElementById("email").textContent = localStorage.getItem("email") || "-";
+    document.getElementById("phone").textContent = localStorage.getItem("phone") || "-";
+    document.getElementById("note").textContent = localStorage.getItem("note") || "-";
+    document.getElementById("deliveryDate").textContent = localStorage.getItem("deliveryDate") || "-";
+    document.getElementById("sizeMB").textContent = localStorage.getItem("sizeMB") || "-";
+    document.getElementById("price").textContent = localStorage.getItem("price") || "-";
+
+    const videoEl = document.getElementById("previewVideo");
+    const filename = localStorage.getItem("tempFilename");
+    if (filename) {
+      videoEl.src = `/uploads/${filename}`;
+    } else {
+      videoEl.style.display = "none";
+    }
+
+    // Gönderme butonu
     const sendBtn = document.getElementById("sendBtn");
     const successMessage = document.getElementById("successMessage");
 
@@ -153,6 +175,26 @@
         tempFilename: localStorage.getItem("tempFilename"),
       };
 
+      if (parseFloat(payload.price) > 0) {
+        // Shopier ödeme sayfasına yönlendir
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/shopier-odeme";
+
+        for (const [key, val] of Object.entries(payload)) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = key;
+          input.value = val;
+          form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      // Ücretsiz yükleme işlemi
       try {
         const upload = await fetch("/shopier-basarili-yukle", {
           method: "POST",
@@ -180,33 +222,16 @@
           localStorage.clear();
         } else {
           alert("Kayıt başarısız!");
-          sendBtn.disabled = false;
-          sendBtn.textContent = "Gönder";
         }
 
       } catch (err) {
         alert("❌ Sunucu hatası");
         console.error(err);
-        sendBtn.disabled = false;
-        sendBtn.textContent = "Gönder";
+      } finally {
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Gönderildi";
       }
     });
-
-    document.getElementById("fullname").textContent = localStorage.getItem("fullname") || "-";
-    document.getElementById("email").textContent = localStorage.getItem("email") || "-";
-    document.getElementById("phone").textContent = localStorage.getItem("phone") || "-";
-    document.getElementById("note").textContent = localStorage.getItem("note") || "-";
-    document.getElementById("deliveryDate").textContent = localStorage.getItem("deliveryDate") || "-";
-    document.getElementById("sizeMB").textContent = localStorage.getItem("sizeMB") || "-";
-    document.getElementById("price").textContent = localStorage.getItem("price") || "-";
-
-    const videoEl = document.getElementById("previewVideo");
-    const filename = localStorage.getItem("tempFilename");
-    if (filename) {
-      videoEl.src = `/uploads/${filename}`;
-    } else {
-      videoEl.style.display = "none";
-    }
   </script>
 </body>
 </html>
