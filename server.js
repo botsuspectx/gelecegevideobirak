@@ -120,9 +120,9 @@ app.post("/shopier-odeme", (req, res) => {
       failure_url: "https://gelecegevideobirak.com/odeme-hata.html"
     };
 
-    const ordered = Object.entries(data).sort();
-    // 🔄 Doğru hali
-    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
+    const ordered = Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]));
+    const signatureStr = ordered.map(([key, val]) => `${key}=${encodeURIComponent(val)}`).join("&") + secretKey;
+
     const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
 
     console.log("Shopier data:", data);
