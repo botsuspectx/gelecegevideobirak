@@ -116,8 +116,8 @@ app.post("/shopier-odeme", (req, res) => {
       order_price: price,
       currency: "TL",
       platform_order_id: random_id,
-      success_url: "https://gelecegevideobirak.onrender.com/odeme-basarili.html",
-      failure_url: "https://gelecegevideobirak.onrender.com/odeme-hata.html"
+      success_url: "https://gelecegevideobirak.com/odeme-basarili.html",
+      failure_url: "https://gelecegevideobirak.com/odeme-hata.html"
     };
 
     const ordered = Object.entries(data).sort();
