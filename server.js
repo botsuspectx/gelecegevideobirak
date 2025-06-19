@@ -121,7 +121,8 @@ app.post("/shopier-odeme", (req, res) => {
     };
 
     const ordered = Object.entries(data).sort();
-    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + "&" + secretKey;
+    // 🔄 Doğru hali
+    const signatureStr = ordered.map(([key, val]) => `${key}=${val}`).join("&") + secretKey;
     const signature = crypto.createHash("sha256").update(signatureStr).digest("hex");
 
     console.log("Shopier data:", data);
