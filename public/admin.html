@@ -126,27 +126,33 @@
         });
     }
 
-    function displayData(data) {
-      const tbody = document.getElementById("dataBody");
-      tbody.innerHTML = "";
-      data.forEach(item => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${item.fullname}</td>
-          <td>${item.email}</td>
-          <td>${item.phone}</td>
-          <td>${item.note}</td>
-          <td>${item.deliveryDate}</td>
-          <td>${item.sizeMB}</td>
-          <td>${item.price}</td>
-          <td>${new Date(item.timestamp).toLocaleString("tr-TR")}</td>
-          <td><button class="link-button" onclick="showVideo('${item.videoFilename}')">Göster</button></td>
-          <td><button onclick="sendMail('${item.timestamp}')">Gönder</button></td>
-          <td><button onclick="deleteData('${item.timestamp}')">Sil</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+function displayData(data) {
+  const tbody = document.getElementById("dataBody");
+  tbody.innerHTML = "";
+  data.forEach(item => {
+    const tr = document.createElement("tr");
+    const noteId = "note-" + item.timestamp;
+
+    tr.innerHTML = `
+      <td>${item.fullname}</td>
+      <td>${item.email}</td>
+      <td>${item.phone}</td>
+      <td>
+        <span id="${noteId}" style="display: none;">${item.note}</span>
+        <button onclick="toggleNote('${noteId}', this)">Göster</button>
+      </td>
+      <td>${item.deliveryDate}</td>
+      <td>${item.sizeMB}</td>
+      <td>${item.price}</td>
+      <td>${new Date(item.timestamp).toLocaleString("tr-TR")}</td>
+      <td><button class="link-button" onclick="showVideo('${item.videoFilename}')">Göster</button></td>
+      <td><button onclick="sendMail('${item.timestamp}')">Gönder</button></td>
+      <td><button onclick="deleteData('${item.timestamp}')">Sil</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 
     function deleteData(timestamp) {
       if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
@@ -163,6 +169,14 @@
       const url = filename.startsWith("http") ? filename : `/uploads/${filename}`;
       window.open(url, "_blank");
     }
+    function toggleNote(id, btn) {
+  const noteEl = document.getElementById(id);
+  const isVisible = noteEl.style.display === "inline";
+
+  noteEl.style.display = isVisible ? "none" : "inline";
+  btn.textContent = isVisible ? "Göster" : "Gizle";
+}
+
 
     function sendMail(timestamp) {
       if (!confirm("Bu kişiye manuel olarak e-posta göndermek istiyor musunuz?")) return;
