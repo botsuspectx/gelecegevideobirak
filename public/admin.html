@@ -70,6 +70,10 @@
     <input type="text" id="search" placeholder="İsim, e-posta, telefon ara..." />
     <table>
       <thead>
+        <th>Video</th>
+        <th>Mail</th> <!-- 🆕 bu satır -->
+        <th>Sil</th>
+
         <tr>
           <th>İsim Soyisim</th>
           <th>E-posta</th>
@@ -132,16 +136,20 @@
       data.forEach(item => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${item.fullname}</td>
-          <td>${item.email}</td>
-          <td>${item.phone}</td>
-          <td>${item.note}</td>
-          <td>${item.deliveryDate}</td>
-          <td>${item.sizeMB}</td>
-          <td>${item.price}</td>
-          <td>${new Date(item.timestamp).toLocaleString("tr-TR")}</td>
-          <td><button class="link-button" onclick="showVideo('${item.videoFilename}')">Göster</button></td>
-          <td><button onclick="deleteData('${item.timestamp}')">Sil</button></td>
+          tr.innerHTML = `
+  <td>${item.fullname}</td>
+  <td>${item.email}</td>
+  <td>${item.phone}</td>
+  <td>${item.note}</td>
+  <td>${item.deliveryDate}</td>
+  <td>${item.sizeMB}</td>
+  <td>${item.price}</td>
+  <td>${new Date(item.timestamp).toLocaleString("tr-TR")}</td>
+  <td><button class="link-button" onclick="showVideo('${item.videoFilename}')">Göster</button></td>
+  <td><button onclick="sendMail('${item.timestamp}')">Gönder</button></td> <!-- 🆕 -->
+  <td><button onclick="deleteData('${item.timestamp}')">Sil</button></td>
+`;
+
         `;
         tbody.appendChild(tr);
       });
@@ -201,6 +209,29 @@
       .then(res => res.json())
       .then(() => fetchYorumlar());
     }
+
+      function sendMail(timestamp) {
+    if (!confirm("Bu kişiye manuel olarak e-posta göndermek istiyor musunuz?")) return;
+
+    fetch("/manuel-mail-gonder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ timestamp })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("✅ Mail gönderildi.");
+        fetchData();
+      } else {
+        alert("❌ Gönderim hatası.");
+      }
+    })
+    .catch(err => {
+      console.error("❌ İstek hatası:", err);
+      alert("Sunucu hatası.");
+    });
+  }
 
     fetchData();
     fetchYorumlar();
