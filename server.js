@@ -163,6 +163,28 @@ app.post("/submit", upload.single("video"), async (req, res) => {
                 sizeMB <= 1024 ? 50 : 200;
 
   // Burada sadece dosya adını dön, henüz Drive'a yükleme
+  const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "mansurkuddar0001@gmail.com",
+    pass: "kftp wkud atki ixkh"
+  }
+});
+
+await transporter.sendMail({
+  from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
+  to: "destek@gelecegevideobirak.com", // 👈 sana gelen adres
+  subject: "📥 Yeni Video Yüklemesi Geldi",
+  text: `
+Yeni bir kullanıcı video yükledi!
+
+👤 İsim: ${fullname}
+📧 E-posta: ${email}
+🎬 Dosya Adı: ${video.filename}
+💾 Boyut (MB): ${sizeMB.toFixed(2)}
+💸 Tahmini Ücret: ${price} ₺
+  `
+});
   res.json({
     success: true,
     tempFilename: video.filename,
