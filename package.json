@@ -17,6 +17,7 @@
     "nodemailer": "^6.9.0",
     "mongoose": "^7.6.3",
     "node-fetch": "^2.6.9",
-    "nodemailer": "^6.9.10"
+    "nodemailer": "^6.9.10",
+    "node-cron": "^3.0.2"
   }
 }
