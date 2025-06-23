@@ -43,7 +43,7 @@ const veriSchema = new mongoose.Schema({
   price: String,
   videoFilename: String,
   timestamp: String,
-  platform_order_id: String
+  platform_order_id: String,
   mailSent: { type: Boolean, default: false }  // 🆕 bu satır
 });
 
