@@ -435,6 +435,70 @@ app.post("/email-dogrula", async (req, res) => {
   }
 });
 
+const cron = require("node-cron");
+
+// Her sabah 06:00'da çalışır
+cron.schedule("0 6 * * *", async () => {
+  console.log("⏰ Mail gönderim kontrolü başladı");
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  try {
+    const bekleyenler = await Veri.find({
+      deliveryDate: today,
+      mailSent: { $ne: true }
+    });
+
+    if (bekleyenler.length === 0) {
+      console.log("✅ Bugün gönderilecek mail yok.");
+      return;
+    }
+
+    // Mail gönderici ayarları (Gmail)
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "mansurkuddar0001@gmail.com",
+        pass: "kftp wkud atki ixkh"
+      }
+    });
+
+    for (const kayit of bekleyenler) {
+      const mailOptions = {
+        from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
+        to: kayit.email,
+        subject: "🎥 Geleceğe Bıraktığınız Mesaj Zamanı Geldi!",
+        text: `
+Merhaba ${kayit.fullname},
+
+Belirttiğiniz tarihte geleceğe gönderdiğiniz mesaj artık hazır.
+📹 Videonuza şu bağlantıdan ulaşabilirsiniz:
+
+${kayit.videoFilename}
+
+Notunuz: "${kayit.note}"
+
+Sevgiyle,
+Geleceğe Video Bırak Ekibi
+        `
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        await Veri.updateOne({ _id: kayit._id }, { $set: { mailSent: true } });
+        console.log(`✅ Mail gönderildi: ${kayit.email}`);
+      } catch (err) {
+        console.error(`❌ Mail gönderilemedi: ${kayit.email}`, err);
+      }
+    }
+
+  } catch (err) {
+    console.error("❌ Günlük mail gönderimi sırasında hata:", err);
+  }
+});
+
+
 
 
 app.listen(PORT, () => {
