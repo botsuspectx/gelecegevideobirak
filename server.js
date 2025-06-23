@@ -500,14 +500,12 @@ Geleceğe Video Bırak Ekibi
 });
 
 app.post("/manuel-mail-gonder", authMiddleware, async (req, res) => {
-  const { id } = req.body;
+  const { timestamp } = req.body;
 
   try {
-    const kayit = await Veri.findById(id);
+    const kayit = await Veri.findOne({ timestamp }); // ✅ burası değişti
     if (!kayit) return res.status(404).json({ success: false });
 
-    // Gmail SMTP ile mail gönder
-    const nodemailer = require("nodemailer");
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -536,7 +534,7 @@ Geleceğe Video Bırak Ekibi
     };
 
     await transporter.sendMail(mailOptions);
-    await Veri.updateOne({ _id: id }, { $set: { mailSent: true } });
+    await Veri.updateOne({ timestamp }, { $set: { mailSent: true } });
 
     res.json({ success: true });
 
