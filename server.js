@@ -150,6 +150,7 @@ app.post("/shopier-odeme", (req, res) => {
 app.post("/submit", upload.single("video"), async (req, res) => {
   const video = req.file;
   const { fullname, email } = req.body;
+
   if (!video || !fullname || !email) {
     return res.status(400).json({ success: false, error: "Eksik bilgi veya video." });
   }
@@ -162,20 +163,20 @@ app.post("/submit", upload.single("video"), async (req, res) => {
                 sizeMB <= 500 ? 40 :
                 sizeMB <= 1024 ? 50 : 200;
 
-  // Burada sadece dosya adını dön, henüz Drive'a yükleme
-  const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "mansurkuddar0001@gmail.com",
-    pass: "kftp wkud atki ixkh"
-  }
-});
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "mansurkuddar0001@gmail.com",
+        pass: "kftp wkud atki ixkh"
+      }
+    });
 
-await transporter.sendMail({
-  from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
-  to: "destek@gelecegevideobirak.com", // 👈 sana gelen adres
-  subject: "📥 Yeni Video Yüklemesi Geldi",
-  text: `
+    await transporter.sendMail({
+      from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
+      to: "destek@gelecegevideobirak.com",
+      subject: "📥 Yeni Video Yüklemesi Geldi",
+      text: `
 Yeni bir kullanıcı video yükledi!
 
 👤 İsim: ${fullname}
@@ -183,8 +184,14 @@ Yeni bir kullanıcı video yükledi!
 🎬 Dosya Adı: ${video.filename}
 💾 Boyut (MB): ${sizeMB.toFixed(2)}
 💸 Tahmini Ücret: ${price} ₺
-  `
-});
+`
+    });
+
+    console.log("✅ Bilgilendirme maili gönderildi.");
+  } catch (err) {
+    console.error("❌ Bilgilendirme maili gönderilemedi:", err);
+  }
+
   res.json({
     success: true,
     tempFilename: video.filename,
@@ -192,6 +199,7 @@ Yeni bir kullanıcı video yükledi!
     price,
   });
 });
+
 app.post("/shopier-basarili-yukle", async (req, res) => {
   const {
     fullname,
