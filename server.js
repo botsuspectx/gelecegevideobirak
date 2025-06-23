@@ -44,6 +44,7 @@ const veriSchema = new mongoose.Schema({
   videoFilename: String,
   timestamp: String,
   platform_order_id: String
+  mailSent: { type: Boolean, default: false }  // 🆕 bu satır
 });
 
 const Veri = mongoose.model("Veri", veriSchema);
