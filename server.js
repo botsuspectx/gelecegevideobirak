@@ -499,6 +499,53 @@ Geleceğe Video Bırak Ekibi
   }
 });
 
+app.post("/manuel-mail-gonder", authMiddleware, async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const kayit = await Veri.findById(id);
+    if (!kayit) return res.status(404).json({ success: false });
+
+    // Gmail SMTP ile mail gönder
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "mansurkuddar0001@gmail.com",
+        pass: "kftp wkud atki ixkh"
+      }
+    });
+
+    const mailOptions = {
+      from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
+      to: kayit.email,
+      subject: "🎥 Geleceğe Bıraktığınız Mesaj Zamanı Geldi!",
+      text: `
+Merhaba ${kayit.fullname},
+
+Belirttiğiniz tarihte geleceğe gönderdiğiniz mesaj artık hazır.
+📹 Videonuza şu bağlantıdan ulaşabilirsiniz:
+
+${kayit.videoFilename}
+
+Notunuz: "${kayit.note}"
+
+Sevgiyle,
+Geleceğe Video Bırak Ekibi
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    await Veri.updateOne({ _id: id }, { $set: { mailSent: true } });
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("❌ Manuel mail gönderme hatası:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 
 
