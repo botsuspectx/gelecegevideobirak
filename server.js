@@ -196,32 +196,10 @@ app.post("/submit", upload.single("video"), async (req, res) => {
               sizeMB <= 1024 ? (fiyatAyari.mb1024 || 50) : (fiyatAyari.mbUstu || 200);
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "mansurkuddar0001@gmail.com",
-        pass: "kftp wkud atki ixkh"
-      }
-    });
-
-    await transporter.sendMail({
-      from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
-      to: "destek@gelecegevideobirak.com",
-      subject: "📥 Yeni Video Yüklemesi Geldi",
-      text: `
-Yeni bir kullanıcı video yükledi!
-
-👤 İsim: ${fullname}
-📧 E-posta: ${email}
-🎬 Dosya Adı: ${video.filename}
-💾 Boyut (MB): ${sizeMB.toFixed(2)}
-💸 Tahmini Ücret: ${price} ₺
-`
-    });
-
-    console.log("✅ Bilgilendirme maili gönderildi.");
+    // E-posta sadece ödeme tamamlandıktan sonra gönderilecek
+    console.log(`📋 Video yüklendi: ${fullname} - ${sizeMB.toFixed(2)} MB - ${price} ₺`);
   } catch (err) {
-    console.error("❌ Bilgilendirme maili gönderilemedi:", err);
+    console.error("❌ Fiyat hesaplama hatası:", err);
   }
 
   res.json({
