@@ -172,6 +172,7 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 
   const sizeMB = video.size / (1024 * 1024);
+  let price = 0; // Default fiyat tanımla
 
   try {
     const fiyatAyari = await FiyatAyari.findOne();
@@ -179,14 +180,21 @@ app.post("/submit", upload.single("video"), async (req, res) => {
       // Eğer fiyat ayarı yoksa default bir fiyat ayarı oluştur
       const defaultFiyat = new FiyatAyari();
       await defaultFiyat.save();
+      // Default fiyatları kullan
+      price = sizeMB <= 5 ? 0 :
+              sizeMB <= 20 ? 10 :
+              sizeMB <= 50 ? 20 :
+              sizeMB <= 100 ? 30 :
+              sizeMB <= 500 ? 40 :
+              sizeMB <= 1024 ? 50 : 200;
+    } else {
+      price = sizeMB <= 5 ? (fiyatAyari.mb5 || 0) :
+              sizeMB <= 20 ? (fiyatAyari.mb20 || 10) :
+              sizeMB <= 50 ? (fiyatAyari.mb50 || 20) :
+              sizeMB <= 100 ? (fiyatAyari.mb100 || 30) :
+              sizeMB <= 500 ? (fiyatAyari.mb500 || 40) :
+              sizeMB <= 1024 ? (fiyatAyari.mb1024 || 50) : (fiyatAyari.mbUstu || 200);
     }
-    
-    let price = sizeMB <= 5 ? (fiyatAyari?.mb5 || 0) :
-                sizeMB <= 20 ? (fiyatAyari?.mb20 || 10) :
-                sizeMB <= 50 ? (fiyatAyari?.mb50 || 20) :
-                sizeMB <= 100 ? (fiyatAyari?.mb100 || 30) :
-                sizeMB <= 500 ? (fiyatAyari?.mb500 || 40) :
-                sizeMB <= 1024 ? (fiyatAyari?.mb1024 || 50) : (fiyatAyari?.mbUstu || 200);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -220,7 +228,7 @@ Yeni bir kullanıcı video yükledi!
     success: true,
     tempFilename: video.filename,
     sizeMB: sizeMB.toFixed(2),
-    price,
+    price: price,
   });
 });
 
