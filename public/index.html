@@ -926,6 +926,14 @@
       <button type="submit" id="submitButton">
         <span>🚀 Geleceğe Gönder</span>
       </button>
+      
+      <div id="progressContainer" style="display: none; margin-top: 20px;">
+        <div style="background: #f3f4f6; border-radius: 12px; height: 8px; overflow: hidden; margin-bottom: 10px;">
+          <div id="progressBar" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 12px;"></div>
+        </div>
+        <div id="progressText" style="text-align: center; font-weight: 600; color: #374151; font-size: 14px;">0%</div>
+      </div>
+      
       <div id="loadingText">⏳ Video yükleniyor, lütfen bekleyiniz...</div>
     </form>
   </div>
@@ -1006,39 +1014,82 @@
     const form = document.getElementById("messageForm");
     const loadingText = document.getElementById("loadingText");
     const submitButton = document.getElementById("submitButton");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       if (!emailVerified) {
-  alert("Lütfen e-posta adresinize gelen doğrulama kodunu girin.");
-  return;
-}
+        alert("Lütfen e-posta adresinize gelen doğrulama kodunu girin.");
+        return;
+      }
 
       const formData = new FormData(form);
+      
+      // UI güncelleme
       submitButton.disabled = true;
       submitButton.textContent = "Gönderiliyor...";
       loadingText.style.display = "block";
+      progressContainer.style.display = "block";
+      
       try {
-        const response = await fetch("/submit", { method: "POST", body: formData });
-        const result = await response.json();
-        if (result.success) {
+        const xhr = new XMLHttpRequest();
+        
+        // Progress event listener
+        xhr.upload.addEventListener('progress', function(e) {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+          }
+        });
+        
+        // Promise wrapper for XMLHttpRequest
+        const response = await new Promise((resolve, reject) => {
+          xhr.onload = function() {
+            if (xhr.status === 200) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              reject(new Error('HTTP ' + xhr.status));
+            }
+          };
+          xhr.onerror = function() {
+            reject(new Error('Network error'));
+          };
+          xhr.open('POST', '/submit');
+          xhr.send(formData);
+        });
+        
+        if (response.success) {
+          progressBar.style.width = '100%';
+          progressText.textContent = '100% - Tamamlandı!';
+          
           localStorage.setItem("fullname", form.fullname.value);
           localStorage.setItem("email", form.email.value);
           localStorage.setItem("phone", form.phone.value);
           localStorage.setItem("note", form.note.value);
           localStorage.setItem("deliveryDate", form.deliveryDate.value);
-          localStorage.setItem("sizeMB", result.sizeMB);
-          localStorage.setItem("price", result.price);
-          localStorage.setItem("tempFilename", result.tempFilename);
-          window.location.href = "preview.html";
+          localStorage.setItem("sizeMB", response.sizeMB);
+          localStorage.setItem("price", response.price);
+          localStorage.setItem("tempFilename", response.tempFilename);
+          
+          setTimeout(() => {
+            window.location.href = "preview.html";
+          }, 1000);
         } else {
-          alert("❌ Video yüklenemedi:\n" + result.error);
+          alert("❌ Video yüklenemedi:\n" + response.error);
         }
       } catch (err) {
         alert("Sunucuya ulaşılamadı.");
+        console.error(err);
       } finally {
         submitButton.disabled = false;
-        submitButton.textContent = "Gönder";
+        submitButton.textContent = "🚀 Geleceğe Gönder";
         loadingText.style.display = "none";
+        progressContainer.style.display = "none";
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
       }
     });
 
