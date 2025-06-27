@@ -43,11 +43,27 @@ const veriSchema = new mongoose.Schema({
   price: String,
   videoFilename: String,
   timestamp: String,
-  platform_order_id: String,
   mailSent: { type: Boolean, default: false }  // 🆕 bu satır
 });
 
 const Veri = mongoose.model("Veri", veriSchema);
+
+// Fiyat Ayarları Şeması ve Modeli
+const fiyatAyariSchema = new mongoose.Schema({
+  mb5: { type: Number, default: 0 },
+  mb20: { type: Number, default: 10 },
+  mb50: { type: Number, default: 20 },
+  mb100: { type: Number, default: 30 },
+  mb500: { type: Number, default: 40 },
+  mb1024: { type: Number, default: 50 },
+  mbUstu: { type: Number, default: 200 }
+});
+
+const FiyatAyari = mongoose.model("FiyatAyari", fiyatAyariSchema);
+
+// Aktif kullanıcılar
+const activeUsers = new Set();
+const userActivity = new Map();
 
 
 const storage = multer.diskStorage({
@@ -156,14 +172,22 @@ app.post("/submit", upload.single("video"), async (req, res) => {
   }
 
   const sizeMB = video.size / (1024 * 1024);
-  const price = sizeMB <= 5 ? 0 :
-                sizeMB <= 20 ? 10 :
-                sizeMB <= 50 ? 20 :
-                sizeMB <= 100 ? 30 :
-                sizeMB <= 500 ? 40 :
-                sizeMB <= 1024 ? 50 : 200;
 
   try {
+    const fiyatAyari = await FiyatAyari.findOne();
+    if (!fiyatAyari) {
+      // Eğer fiyat ayarı yoksa default bir fiyat ayarı oluştur
+      const defaultFiyat = new FiyatAyari();
+      await defaultFiyat.save();
+    }
+    
+    let price = sizeMB <= 5 ? (fiyatAyari?.mb5 || 0) :
+                sizeMB <= 20 ? (fiyatAyari?.mb20 || 10) :
+                sizeMB <= 50 ? (fiyatAyari?.mb50 || 20) :
+                sizeMB <= 100 ? (fiyatAyari?.mb100 || 30) :
+                sizeMB <= 500 ? (fiyatAyari?.mb500 || 40) :
+                sizeMB <= 1024 ? (fiyatAyari?.mb1024 || 50) : (fiyatAyari?.mbUstu || 200);
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -468,11 +492,23 @@ app.post("/email-dogrula", async (req, res) => {
 
 const cron = require("node-cron");
 
+// Mail gönderici ayarları (üstte tanımlanmış nodemailer'ı kullan)
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "mansurkuddar0001@gmail.com",
+      pass: "kftp wkud atki ixkh"
+    }
+  });
+};
+
 // Her sabah 06:00'da çalışır
 cron.schedule("0 6 * * *", async () => {
-  console.log("⏰ Mail gönderim kontrolü başladı");
+  console.log("⏰ Mail gönderim kontrolü başladı - " + new Date().toLocaleString('tr-TR'));
 
   const today = new Date().toISOString().slice(0, 10);
+  console.log(`📅 Kontrol edilen tarih: ${today}`);
 
   try {
     const bekleyenler = await Veri.find({
@@ -480,33 +516,56 @@ cron.schedule("0 6 * * *", async () => {
       mailSent: { $ne: true }
     });
 
+    console.log(`📊 Bugün gönderilecek ${bekleyenler.length} mail bulundu`);
+
     if (bekleyenler.length === 0) {
       console.log("✅ Bugün gönderilecek mail yok.");
       return;
     }
 
-    // Mail gönderici ayarları (Gmail)
-    const nodemailer = require("nodemailer");
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "mansurkuddar0001@gmail.com",
-        pass: "kftp wkud atki ixkh"
-      }
-    });
+    const transporter = createTransporter();
+    let basarili = 0;
+    let basarisiz = 0;
 
     for (const kayit of bekleyenler) {
       const mailOptions = {
         from: '"Geleceğe Video Bırak" <mansurkuddar0001@gmail.com>',
         to: kayit.email,
         subject: "🎥 Geleceğe Bıraktığınız Mesaj Zamanı Geldi!",
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 24px;">🎥 Geleceğe Bıraktığınız Mesaj Hazır!</h1>
+          </div>
+
+          <div style="background: white; padding: 30px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Merhaba <strong>${kayit.fullname}</strong>,</p>
+
+            <p style="color: #666; line-height: 1.6;">Belirttiğiniz tarihte geleceğe gönderdiğiniz özel mesajınız artık hazır ve sizi bekliyor!</p>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #667eea;">
+              <p style="margin: 0; color: #495057;"><strong>Notunuz:</strong></p>
+              <p style="margin: 10px 0 0 0; color: #6c757d; font-style: italic;">"${kayit.note}"</p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${kayit.videoFilename}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">📹 Videonu İzle</a>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+
+            <p style="text-align: center; color: #999; font-size: 14px;">
+              Sevgiyle,<br>
+              <strong>Geleceğe Video Bırak Ekibi</strong>
+            </p>
+          </div>
+        </div>
+        `,
         text: `
 Merhaba ${kayit.fullname},
 
 Belirttiğiniz tarihte geleceğe gönderdiğiniz mesaj artık hazır.
-📹 Videonuza şu bağlantıdan ulaşabilirsiniz:
-
-${kayit.videoFilename}
+📹 Videonuza şu bağlantıdan ulaşabilirsiniz: ${kayit.videoFilename}
 
 Notunuz: "${kayit.note}"
 
@@ -518,11 +577,40 @@ Geleceğe Video Bırak Ekibi
       try {
         await transporter.sendMail(mailOptions);
         await Veri.updateOne({ _id: kayit._id }, { $set: { mailSent: true } });
-        console.log(`✅ Mail gönderildi: ${kayit.email}`);
+        console.log(`✅ Mail gönderildi: ${kayit.fullname} (${kayit.email})`);
+        basarili++;
+
+        // Çok hızlı gönderim için küçük bir bekleme
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
       } catch (err) {
-        console.error(`❌ Mail gönderilemedi: ${kayit.email}`, err);
+        console.error(`❌ Mail gönderilemedi: ${kayit.fullname} (${kayit.email})`, err.message);
+        basarisiz++;
+
+        // 3 kez deneme mekanizması
+        for (let retry = 1; retry <= 3; retry++) {
+          console.log(`🔄 Yeniden deneme ${retry}/3: ${kayit.email}`);
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 saniye bekle
+
+          try {
+            await transporter.sendMail(mailOptions);
+            await Veri.updateOne({ _id: kayit._id }, { $set: { mailSent: true } });
+            console.log(`✅ ${retry}. denemede başarılı: ${kayit.email}`);
+            basarili++;
+            basarisiz--;
+            break;
+          } catch (retryErr) {
+            console.error(`❌ ${retry}. deneme başarısız: ${kayit.email}`, retryErr.message);
+            if (retry === 3) {
+              // Son denemede de başarısız olursa log kaydet
+              console.error(`🚨 3 deneme sonrası başarısız: ${kayit.fullname} (${kayit.email})`);
+            }
+          }
+        }
       }
     }
+
+    console.log(`📊 Mail gönderim sonuçları - Başarılı: ${basarili}, Başarısız: ${basarisiz}`);
 
   } catch (err) {
     console.error("❌ Günlük mail gönderimi sırasında hata:", err);
@@ -572,6 +660,74 @@ Geleceğe Video Bırak Ekibi
     console.error("❌ Manuel mail gönderme hatası:", err);
     res.status(500).json({ success: false });
   }
+});
+
+// Fiyat ayarlarını getir
+app.get("/fiyat-ayarlari", authMiddleware, async (req, res) => {
+  try {
+    let fiyatAyari = await FiyatAyari.findOne();
+    if (!fiyatAyari) {
+      fiyatAyari = new FiyatAyari();
+      await fiyatAyari.save();
+    }
+    res.json(fiyatAyari);
+  } catch (err) {
+    console.error("❌ Fiyat ayarları alınamadı:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Fiyat ayarlarını güncelle
+app.post("/fiyat-ayarlari", authMiddleware, async (req, res) => {
+  try {
+    const { mb5, mb20, mb50, mb100, mb500, mb1024, mbUstu } = req.body;
+
+    let fiyatAyari = await FiyatAyari.findOne();
+    if (!fiyatAyari) {
+      fiyatAyari = new FiyatAyari();
+    }
+
+    fiyatAyari.mb5 = mb5;
+    fiyatAyari.mb20 = mb20;
+    fiyatAyari.mb50 = mb50;
+    fiyatAyari.mb100 = mb100;
+    fiyatAyari.mb500 = mb500;
+    fiyatAyari.mb1024 = mb1024;
+    fiyatAyari.mbUstu = mbUstu;
+
+    await fiyatAyari.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Fiyat ayarları güncellenemedi:", err);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Aktif kullanıcı sayısını getir
+app.get("/aktif-kullanicilar", authMiddleware, (req, res) => {
+  // 5 dakikadan eski aktiviteleri temizle
+  const now = Date.now();
+  const fiveMinutesAgo = now - (5 * 60 * 1000);
+
+  for (const [userId, lastActivity] of userActivity.entries()) {
+    if (lastActivity < fiveMinutesAgo) {
+      activeUsers.delete(userId);
+      userActivity.delete(userId);
+    }
+  }
+
+  res.json({ activeUsers: activeUsers.size });
+});
+
+// Kullanıcı aktivitesi kaydet (ana sayfa ziyareti)
+app.post("/kullanici-aktivite", (req, res) => {
+  const userIP = req.ip || req.connection.remoteAddress;
+  const userId = req.headers['x-forwarded-for'] || userIP;
+
+  activeUsers.add(userId);
+  userActivity.set(userId, Date.now());
+
+  res.json({ success: true });
 });
 
 
