@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Geleceğe Mesaj</title>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <style>
+    /* Mevcut tüm CSS (kapsüller, hover menü, form, yorum alanı vs.) */
+    body {
+      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .background-capsules { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .capsule {
+      position: absolute;
+      border-radius: 20px;
+      animation: float linear infinite;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .capsule.small {
+      width: 30px;
+      height: 12px;
+    }
+
+    .capsule.medium {
+      width: 45px;
+      height: 18px;
+    }
+
+    .capsule.large {
+      width: 60px;
+      height: 24px;
+    }
+
+    @keyframes float {
+      0% { 
+        transform: translateY(100vh) rotate(0deg) scale(0.8); 
+        opacity: 0; 
+      }
+      10% { 
+        opacity: 0.8; 
+        transform: translateY(90vh) rotate(36deg) scale(1); 
+      }
+      50% { 
+        opacity: 1; 
+        transform: translateY(50vh) rotate(180deg) scale(1.1); 
+      }
+      90% { 
+        opacity: 0.6; 
+        transform: translateY(10vh) rotate(324deg) scale(0.9); 
+      }
+      100% { 
+        transform: translateY(-10vh) rotate(360deg) scale(0.7); 
+        opacity: 0; 
+      }
+    }
+    .hover-menu-container {
+      display: flex; gap: 12px; padding: 20px; justify-content: center; flex-wrap: wrap;
+    }
+    .hover-btn {
+      background-color: #2563eb; color: white; padding: 12px 20px; border-radius: 9999px; cursor: pointer; font-weight: bold;
+      transition: background 0.3s ease; position: relative;
+    }
+    .hover-btn:hover { background-color: #1d4ed8; }
+    .hover-content {
+      position: absolute; top: 50px; background-color: white; color: #1e293b; border-radius: 12px;
+      padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; width: 250px; z-index: 999;
+    }
+    .hover-content ul { list-style: none; padding: 0; margin: 0; }
+    .hover-content li { margin-bottom: 8px; font-size: 14px; }
+
+    .form-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      padding: 40px; border-radius: 24px; 
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+      max-width: 550px; width: 100%; margin: 30px auto; position: relative; z-index: 1;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    .form-container::before {
+      content: ""; position: absolute; top: -2px; right: -2px; bottom: -2px; left: -2px;
+      z-index: -1; background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+      border-radius: 26px; filter: blur(8px); opacity: 0.1;
+    }
+    .form-container h2 {
+      text-align: center; margin-bottom: 30px; 
+      background: linear-gradient(135deg, #1e40af, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; font-size: 24px; font-weight: 700;
+    }
+    .form-group {
+      margin-bottom: 20px; position: relative;
+    }
+    .form-group label {
+      display: block; margin-bottom: 8px; font-weight: 600; 
+      color: #374151; font-size: 14px; letter-spacing: 0.5px;
+    }
+    input, textarea {
+      width: 100%; padding: 16px 20px; margin: 0; 
+      border: 2px solid #e5e7eb; border-radius: 16px; font-size: 15px;
+      background: #ffffff; transition: all 0.3s ease;
+      font-family: inherit; outline: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Mobil tarih input iyileştirmesi */
+    input[type="date"] {
+      color: #374151 !important;
+      background-color: #ffffff !important;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      position: relative;
+    }
+
+    input[type="date"]::-webkit-datetime-edit {
+      color: #374151;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>') no-repeat center;
+      color: transparent;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      input[type="date"] {
+        font-size: 16px !important;
+        min-height: 52px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: #ffffff !important;
+        color: #374151 !important;
+      }
+
+      input[type="date"]::-webkit-datetime-edit {
+        color: #374151 !important;
+        font-weight: 500;
+      }
+
+      input[type="date"]::-webkit-datetime-edit-text {
+        color: #374151 !important;
+      }
+
+      input[type="date"]::-webkit-datetime-edit-month-field,
+      input[type="date"]::-webkit-datetime-edit-day-field,
+      input[type="date"]::-webkit-datetime-edit-year-field {
+        color: #374151 !important;
+      }
+    }
+    input:focus, textarea:focus {
+      border-color: #3b82f6; background: #fefefe;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+      transform: translateY(-1px);
+    }
+    input:hover, textarea:hover {
+      border-color: #9ca3af;
+    }
+    textarea {
+      resize: vertical; min-height: 120px; line-height: 1.6;
+    }
+    button {
+      margin-top: 30px; width: 100%; padding: 18px; 
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white; font-size: 16px; font-weight: 700; border: none; 
+      border-radius: 16px; cursor: pointer; letter-spacing: 0.5px;
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+    button::before {
+      content: ''; position: absolute; top: 0; left: -100%; 
+      width: 100%; height: 100%; 
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    button:hover::before { left: 100%; }
+    button:hover:not(:disabled) { 
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    }
+    button:active:not(:disabled) {
+      transform: translateY(0px);
+    }
+    button:disabled { 
+      background: linear-gradient(135deg, #94a3b8, #64748b);
+      cursor: not-allowed; transform: none;
+      box-shadow: 0 2px 8px rgba(148, 163, 184, 0.2);
+    }
+    #loadingText { display: none; text-align: center; margin-top: 15px; font-style: italic; color: #475569; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% {opacity: 0.3;} 50% {opacity: 1;} 100% {opacity: 0.3;} }
+
+    .yorumlar-wrapper {
+      max-width: 650px; margin: 50px auto; 
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 24px; padding: 35px; 
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .yorumlar-wrapper h3 { 
+      margin-bottom: 25px; 
+      background: linear-gradient(135deg, #1e40af, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; font-size: 22px; font-weight: 700;
+      text-align: center;
+    }
+    .yorumlar-wrapper .form-group {
+      margin-bottom: 20px;
+    }
+    .yorumlar-wrapper .form-group label {
+      display: block; margin-bottom: 8px; font-weight: 600; 
+      color: #374151; font-size: 14px;
+    }
+    .yorumlar-wrapper form input, .yorumlar-wrapper form textarea {
+      width: 100%; margin: 0; padding: 16px 20px; 
+      border: 2px solid #e5e7eb; border-radius: 16px;
+      background: #ffffff; transition: all 0.3s ease;
+      font-size: 15px; outline: none;
+    }
+    .yorumlar-wrapper form input:focus, .yorumlar-wrapper form textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .yorumlar-wrapper form label {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 15px; font-size: 14px; color: #4b5563;
+    }
+    .yorumlar-wrapper form input[type="checkbox"] {
+      width: auto; margin: 0; transform: scale(1.2);
+    }
+    .yorumlar-wrapper .yorum {
+      border-top: 1px solid #e5e7eb; margin-top: 25px; padding-top: 20px;
+      background: #fafbfc; padding: 20px; border-radius: 16px;
+      border: 1px solid #f1f5f9;
+    }
+    .yorumlar-wrapper .yorum p {
+      margin-bottom: 10px; line-height: 1.6; color: #374151;
+    }
+    .yorumlar-wrapper .yorum small {
+      color: #6b7280; font-size: 13px; font-weight: 500;
+    }
+    @media (max-width: 600px) {
+  .form-container, .yorumlar-wrapper {
+    width: 95%;
+    padding: 20px;
+    margin: 10px auto;
+  }
+
+  .hero {
+    padding: 0 15px;
+  }
+
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  .hero p {
+    font-size: 16px;
+  }
+
+  .hover-menu-container {
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+  }
+
+  .hover-btn {
+    width: 90%;
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+
+  .hover-content {
+    top: 45px;
+    width: 90vw;
+    left: 0 !important;
+    right: 0;
+    margin: auto;
+    max-width: 350px;
+  }
+
+  input, textarea, button {
+    font-size: 16px !important;
+    padding: 16px 20px;
+    min-height: 52px;
+    -webkit-appearance: none;
+  }
+
+  .form-group label {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .email-verification {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .email-verification input[type="email"] {
+    flex: none;
+    width: 100%;
+  }
+
+  .email-verification button {
+    flex: none;
+    width: 100%;
+    margin: 0;
+  }
+
+  .code-verification input {
+    margin-top: 10px;
+  }
+
+  .gif-gallery {
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .gif-box {
+    width: 45%;
+    min-width: 140px;
+  }
+
+  .gif-box p {
+    font-size: 13px;
+  }
+
+  .iletisim-kapsul {
+    margin: 30px 15px;
+    padding: 20px;
+  }
+
+  .iletisim-kapsul p {
+    font-size: 16px;
+  }
+
+  .iletisim-kapsul a {
+    font-size: 16px;
+  }
+
+  footer {
+    padding: 0 15px;
+    margin-top: 30px;
+  }
+
+  footer a {
+    display: block;
+    margin: 5px 0;
+  }
+}
+.email-verification {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.email-verification input[type="email"] {
+  flex: 7;
+  padding: 16px 20px;
+  font-size: 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+.email-verification input[type="email"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+.email-verification button {
+  flex: 3;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  margin: 0;
+}
+.email-verification button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+.email-verification button:disabled {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.code-verification {
+  margin-top: 15px;
+}
+.code-verification input {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+.code-verification input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+.code-verification input.verified {
+      border-color: #10b981 !important;
+      background: #f0fdf4;
+    }
+
+    .phone-toggle {
+      margin-bottom: 15px;
+    }
+
+    .phone-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      color: #374151;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phone-checkbox-label:hover {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+
+    .phone-checkbox {
+      opacity: 0;
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .checkmark {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      border: 2px solid #d1d5db;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: transparent;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .phone-checkbox:checked + .checkmark {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-color: #3b82f6;
+      color: white;
+      transform: scale(1.1);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .checkbox-text {
+      flex: 1;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+    }
+
+    .phone-input-wrapper {
+      margin-top: 15px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.4s ease;
+    }
+
+    .phone-input-wrapper.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .phone-input-wrapper input {
+      width: 100%;
+      margin: 0;
+    }
+    .hero {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+.hero h1 {
+  font-size: 28px;
+  color: #1e3a8a;
+}
+.hero p {
+  font-size: 18px;
+  color: #334155;
+  margin-top: 10px;
+}
+
+.security-banner {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #16a34a;
+  border-radius: 20px;
+  padding: 25px;
+  margin: 30px auto;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 8px 25px rgba(22, 163, 74, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.security-banner::before {
+  content: '';
+  position: absolute;
+  top: -2px; right: -2px; bottom: -2px; left: -2px;
+  background: linear-gradient(45deg, #16a34a, #22c55e, #15803d);
+  border-radius: 22px;
+  z-index: -1;
+  filter: blur(12px);
+  opacity: 0.3;
+}
+
+.security-icon {
+  font-size: 48px;
+  animation: security-pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes security-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.security-content {
+  flex: 1;
+  text-align: left;
+}
+
+.security-content h3 {
+  margin: 0 0 8px 0;
+  color: #166534;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.security-content p {
+  margin: 0 0 15px 0;
+  color: #15803d;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.security-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.2);
+}
+
+@media (max-width: 600px) {
+  .security-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    margin: 20px 15px;
+  }
+  
+  .security-content {
+    text-align: center;
+  }
+  
+  .security-content h3 {
+    font-size: 18px;
+  }
+  
+  .security-badges {
+    justify-content: center;
+  }
+  
+  .badge {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}
+    .gif-gallery {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
+  margin-top: 20px;
+}
+.gif-box {
+  width: 150px;
+  text-align: center;
+}
+.gif-box img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.gif-box p {
+  font-size: 14px;
+  color: #334155;
+  margin-top: 8px;
+}
+
+    .fixed-contact {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      color: white;
+      font-size: 24px;
+      text-decoration: none;
+    }
+
+    .fixed-contact:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    }
+
+    .fixed-contact::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      animation: pulse-ring 2s infinite;
+      z-index: -1;
+    }
+
+    .contact-tooltip {
+      position: absolute;
+      left: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, #1f2937, #374151);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      animation: tooltip-fade 4s infinite;
+      z-index: 999;
+    }
+
+    .contact-tooltip::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      border-right-color: #1f2937;
+    }
+
+    @keyframes tooltip-fade {
+      0%, 20% {
+        opacity: 0;
+        transform: translateY(-50%) translateX(-10px);
+      }
+      25%, 75% {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0px);
+      }
+      80%, 100% {
+        opacity: 0;
+        transform: translateY(-50%) translateX(-10px);
+      }
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .fixed-contact {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        bottom: 15px;
+        left: 15px;
+      }
+
+      .contact-tooltip {
+        left: 70px;
+        font-size: 13px;
+        padding: 10px 14px;
+      }
+    }
+
+    .floating-message {
+      position: fixed;
+      z-index: 500;
+      background: linear-gradient(135deg, #1f2937, #374151);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+      max-width: 280px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .floating-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .floating-message::before {
+      content: '';
+      position: absolute;
+      top: -2px; right: -2px; bottom: -2px; left: -2px;
+      z-index: -1;
+      background: linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4);
+      border-radius: 22px;
+      filter: blur(8px);
+      opacity: 0.3;
+    }
+
+    @media (max-width: 600px) {
+      .floating-message {
+        font-size: 12px;
+        padding: 10px 16px;
+        max-width: 240px;
+      }
+    }
+
+
+
+
+  </style>
+</head>
+<body>
+
+  <div class="background-capsules" id="capsuleContainer"></div>
+
+  <div class="hover-menu-container">
+    <div class="hover-btn" data-content="how">📋 Nasıl Çalışır?</div>
+    <div class="hover-btn" data-content="why">🔒 Neden Biz?</div>
+    <div class="hover-btn" data-content="faq">❓ SSS</div>
+
+    <div class="hover-content" id="how">
+      <ul>
+        <li>1️⃣ Videonu yükle ve teslim tarihini belirle</li>
+        <li>2️⃣ Notunu ekle</li>
+        <li>3️⃣ Belirlediğin tarihte gönderilsin</li>
+      </ul>
+    </div>
+    <div class="hover-content" id="why">
+      <ul>
+        <li>🔐 Google Drive ile güvenli saklama</li>
+        <li>📅 Zamanlanmış otomatik teslim</li>
+        <li>🧘 Kolay ve hızlı kullanım</li>
+      </ul>
+    </div>
+<div class="hover-content" id="faq">
+  <ul>
+    <li><strong>S:</strong> Video ne kadar saklanır?</li>
+    <li><strong>C:</strong> Belirlenen teslim tarihine kadar.</li>
+
+    <li><strong>S:</strong> Video boyut sınırı var mı?</li>
+    <li><strong>C:</strong> Evet. 5 MB'a kadar ücretsizdir. Üzerindeki boyutlar için ücret alınır.</li>
+
+    <li><strong>S:</strong> Mesajlarımı kimler görebilir?</li>
+    <li><strong>C:</strong> Sadece belirttiğiniz alıcılar, belirtilen tarihte erişebilir.</li>
+
+    <li><strong>S:</strong> Teslim tarihinden önce videoya erişebilir miyim?</li>
+    <li><strong>C:</strong> Hayır, güvenlik için sadece belirlenen tarihte erişim açılır.</li>
+  </ul>
+</div>
+
+  </div>
+
+  <div class="hero">
+  <h1>📹 Geleceğe Video Gönder</h1>
+  <p>Bugünden bir video yükle, notunu ekle ve belirlediğin tarihte alıcısına otomatik olarak gönderilsin.</p>
+  
+  <div class="security-banner">
+    <div class="security-icon">🔐</div>
+    <div class="security-content">
+      <h3>Verileriniz Google Drive ile Güvende</h3>
+      <p>Videolarınız Google'ın güvenli bulut sistemi ile korunur. Sadece belirlediğiniz tarihte erişilebilir.</p>
+      <div class="security-badges">
+        <span class="badge">🛡️ SSL Şifreleme</span>
+        <span class="badge">☁️ Google Cloud</span>
+        <span class="badge">🔒 Özel Erişim</span>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="gif-gallery">
+  <div class="gif-box">
+    <img src="https://media.giphy.com/media/26BRuo6sLetdllPAQ/giphy.gif" alt="Gelecekteki Eş">
+    <p>💕 Gelecekteki Eşine Mesaj Gönder</p>
+  </div>
+  <div class="gif-box">
+    <img src="https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif" alt="Çocuklara Mesaj">
+    <p>👨‍👩‍👧‍👦 Çocuklarına Gelecek Tavsiyesi Bırak</p>
+  </div>
+  <div class="gif-box">
+    <img src="https://media.giphy.com/media/3o7TKF1fSIs1R19B8k/giphy.gif" alt="Arkadaş Grubu">
+    <p>👥 Arkadaş Grubuna Nostaljik Video</p>
+  </div>
+  <div class="gif-box">
+    <img src="https://media.giphy.com/media/l41Ys1fQky5raqvMQ/giphy.gif" alt="Kendine Mesaj">
+    <p>🪞 Gelecekteki Kendine Motivasyon</p>
+  </div>
+</div>
+
+
+
+  <div class="form-container">
+    <h2>🔐 Güvenle Geleceğe Mesaj Gönder</h2>
+    <form id="messageForm" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="fullname">👤 İsim Soyisim</label>
+        <input type="text" id="fullname" name="fullname" placeholder="Adınız ve soyadınız" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">📧 E-posta Adresi</label>
+        <div class="email-verification">
+          <input type="email" id="email" name="email" placeholder="ornek@email.com" required>
+          <button type="button" id="sendCodeBtn" disabled>Kod Gönder</button>
+        </div>
+        <div class="code-verification">
+          <input type="text" id="verificationCode" placeholder="E-postanıza gelen 6 haneli kodu giriniz" disabled>
+          <small id="timerText" style="color: #6b7280; display: none;"></small>
+        </div>
+      </div>
+
+      <div class="form-group phone-toggle">
+        <label class="phone-checkbox-label">
+          <input type="checkbox" id="phoneToggle" class="phone-checkbox">
+          <span class="checkmark">✓</span>
+          <span class="checkbox-text">Telefon numaramı eklemek istiyorum</span>
+        </label>
+        <div id="phoneInputWrapper" class="phone-input-wrapper">
+          <label for="phone">📱 Telefon</label>
+          <input type="tel" id="phone" name="phone" placeholder="0555 123 45 67">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="note">💭 Notunuz</label>
+        <textarea id="note" name="note" placeholder="Geleceğe bırakmak istediğiniz mesajınızı buraya yazın..." rows="4" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="deliveryDate">📅 Teslim Tarihi</label>
+        <input type="date" id="deliveryDate" name="deliveryDate" required 
+               placeholder="GG.AA.YYYY" 
+               style="color: #374151 !important; background-color: #ffffff !important;">
+      </div>
+
+      <div class="form-group">
+        <label for="video">🎬 Video Dosyası</label>
+        <input type="file" id="video" name="video" accept="video/*" required>
+      </div>
+
+      <button type="submit" id="submitButton">
+        <span>🚀 Geleceğe Gönder</span>
+      </button>
+      <div id="loadingText">⏳ Video yükleniyor, lütfen bekleyiniz...</div>
+    </form>
+  </div>
+
+  <div class="yorumlar-wrapper">
+    <h3>🗨️ Düşüncelerinizi Paylaşın</h3>
+    <form id="yorumForm">
+      <div class="form-group">
+        <label for="commentName">👤 Adınız</label>
+        <input type="text" id="commentName" name="name" placeholder="Adınız" required />
+      </div>
+
+      <div class="form-group">
+        <label for="commentEmail">📧 E-posta</label>
+        <input type="email" id="commentEmail" name="email" placeholder="ornek@email.com" required />
+      </div>
+
+      <div class="form-group">
+        <label for="commentText">💬 Yorumunuz</label>
+        <textarea id="commentText" name="comment" placeholder="Deneyiminizi ve düşüncelerinizi bizimle paylaşın..." required></textarea>
+      </div>
+
+      <label>
+        <input type="checkbox" name="showName" checked /> 
+        <span>İsmimin görünmesini istiyorum</span>
+      </label>
+
+      <div class="g-recaptcha" data-sitekey="6Ld8smUrAAAAAAGvmhdlhfIHsrIDdB7HnkuLToPK" style="margin-top: 20px;"></div>
+      <button type="submit">✨ Yorumu Paylaş</button>
+    </form>
+    <div id="yorumlarListesi"></div>
+  </div>
+
+
+
+  <footer style="text-align: center; margin-top: 40px; font-size: 14px; color: #475569;">
+  <a href="kvkk.html" style="margin-right: 15px; color: #2563eb; text-decoration: none;">KVKK Aydınlatma Metni</a>
+  <a href="kullanim-kosullari.html" style="color: #2563eb; text-decoration: none;">Kullanım Koşulları</a>
+</footer>
+
+  <a href="mailto:destek@gelecegevideobirak.com" class="fixed-contact" title="Bizimle İletişime Geçin">
+    📧
+    <div class="contact-tooltip">Bizimle İletişime Geçin</div>
+  </a>
+
+
+  <script>
+    const container = document.getElementById("capsuleContainer");
+    const colors = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#795548", "#607D8B", "#E91E63", "#00BCD4", "#FF5722", "#9E9E9E"];
+    const sizes = ["small", "medium", "large"];
+
+    for (let i = 0; i < 40; i++) {
+      const capsule = document.createElement("div");
+      capsule.classList.add("capsule");
+      capsule.classList.add(sizes[Math.floor(Math.random() * sizes.length)]); // Rastgele boyut
+      capsule.style.left = Math.random() * 100 + "vw";
+      capsule.style.top = Math.random() * 100 + "vh";
+      capsule.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; // Rastgele renk
+      capsule.style.animationDuration = (Math.random() * 20 + 10) + "s";
+      capsule.style.animationDelay = (Math.random() * 10) + "s";
+      container.appendChild(capsule);
+    }
+
+    const buttons = document.querySelectorAll('.hover-btn');
+    const contents = document.querySelectorAll('.hover-content');
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        contents.forEach(content => content.style.display = 'none');
+        const target = document.getElementById(btn.dataset.content);
+        if (target) target.style.display = 'block';
+      });
+    });
+    document.addEventListener('mousemove', (e) => {
+      const isInside = [...buttons, ...contents].some(el => el.contains(e.target));
+      if (!isInside) contents.forEach(c => c.style.display = 'none');
+    });
+
+    const form = document.getElementById("messageForm");
+    const loadingText = document.getElementById("loadingText");
+    const submitButton = document.getElementById("submitButton");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (!emailVerified) {
+  alert("Lütfen e-posta adresinize gelen doğrulama kodunu girin.");
+  return;
+}
+
+      const formData = new FormData(form);
+      submitButton.disabled = true;
+      submitButton.textContent = "Gönderiliyor...";
+      loadingText.style.display = "block";
+      try {
+        const response = await fetch("/submit", { method: "POST", body: formData });
+        const result = await response.json();
+        if (result.success) {
+          localStorage.setItem("fullname", form.fullname.value);
+          localStorage.setItem("email", form.email.value);
+          localStorage.setItem("phone", form.phone.value);
+          localStorage.setItem("note", form.note.value);
+          localStorage.setItem("deliveryDate", form.deliveryDate.value);
+          localStorage.setItem("sizeMB", result.sizeMB);
+          localStorage.setItem("price", result.price);
+          localStorage.setItem("tempFilename", result.tempFilename);
+          window.location.href = "preview.html";
+        } else {
+          alert("❌ Video yüklenemedi:\n" + result.error);
+        }
+      } catch (err) {
+        alert("Sunucuya ulaşılamadı.");
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Gönder";
+        loadingText.style.display = "none";
+      }
+    });
+
+    const yorumForm = document.getElementById("yorumForm");
+yorumForm.addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const formData = new FormData(yorumForm);
+  const data = Object.fromEntries(formData.entries());
+  data.showName = formData.has("showName");
+
+  const token = grecaptcha.getResponse();
+  if (!token) {
+    alert("Lütfen reCAPTCHA doğrulamasını tamamlayın.");
+    return;
+  }
+  data["g-recaptcha-response"] = token;
+
+  try {
+    const res = await fetch("/yorum-ekle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (result.success) {
+      yorumForm.reset();
+      grecaptcha.reset(); // captcha sıfırlama
+      yorumlariGetir();
+    } else {
+      alert("Yorum eklenemedi: " + result.message);
+    }
+  } catch (err) {
+    alert("Sunucu hatası.");
+  }
+});
+
+
+    async function yorumlariGetir() {
+      try {
+        const res = await fetch("/yorumlar");
+        const yorumlar = await res.json();
+        const liste = document.getElementById("yorumlarListesi");
+        liste.innerHTML = "";
+        yorumlar.reverse().forEach(y => {
+          const yorum = document.createElement("div");
+          yorum.classList.add("yorum");
+          yorum.innerHTML = `
+            <p>${y.comment}</p>
+            <small>${y.showName ? y.name : "Anonim"} – ${new Date(y.timestamp).toLocaleString("tr-TR")}</small>
+          `;
+          liste.appendChild(yorum);
+        });
+      } catch (err) {
+        console.error("Yorumlar alınamadı:", err);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", yorumlariGetir);
+    
+    // Kullanıcı aktivitesini kaydet
+    fetch("/kullanici-aktivite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    }).catch(() => {}); // Hata durumunda sessiz başarısızlık
+
+    let sentCode = "";
+let emailVerified = false;
+let timerInterval;
+
+document.getElementById("sendCodeBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  if (!email.includes("@")) return alert("Lütfen geçerli bir e-posta girin.");
+
+  document.getElementById("sendCodeBtn").disabled = true;
+  document.getElementById("sendCodeBtn").textContent = "Gönderildi";
+  document.getElementById("timerText").style.display = "inline";
+
+  try {
+    const res = await fetch("/email-dogrula", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const result = await res.json();
+    if (result.success) {
+      sentCode = result.code;
+      emailVerified = false;
+      document.getElementById("verificationCode").disabled = false;
+      startCountdown(60);
+    } else {
+      alert("Kod gönderilemedi.");
+      resetCodeButton();
+    }
+  } catch {
+    alert("Sunucu hatası");
+    resetCodeButton();
+  }
+});
+
+function resetCodeButton() {
+  document.getElementById("sendCodeBtn").disabled = false;
+  document.getElementById("sendCodeBtn").textContent = "Kod Gönder";
+  document.getElementById("timerText").style.display = "none";
+  clearInterval(timerInterval);
+}
+
+function startCountdown(seconds) {
+  let remaining = seconds;
+  timerInterval = setInterval(() => {
+    if (remaining <= 0) {
+      resetCodeButton();
+      return;
+    }
+    document.getElementById("timerText").textContent = `Yeniden kod gönderilebilir: ${remaining} sn`;
+    remaining--;
+  }, 1000);
+}
+    document.getElementById("email").addEventListener("input", function () {
+  const emailValue = this.value.trim();
+  document.getElementById("sendCodeBtn").disabled = emailValue === "";
+});
+
+
+document.getElementById("verificationCode").addEventListener("input", function () {
+  if (this.value === sentCode) {
+    emailVerified = true;
+    this.style.borderColor = "#10b981";
+    this.style.background = "#f0fdf4";
+    this.classList.add("verified");
+  } else {
+    emailVerified = false;
+    this.style.borderColor = "#ef4444";
+    this.style.background = "#fef2f2";
+    this.classList.remove("verified");
+  }
+});
+
+// Rastgele motivasyonel mesajlar
+const motivationalMessages = [
+  "Bugün, geleceğe video bırakmaya ne dersin??",
+  "Gelecekteki ben, umarım hâlâ kahveni şekersiz içiyorsundur. Bir selam çak geçmişten!",
+  "Bugünün çaylak halini yarının CEO'suna hatırlat!",
+  "Bir gün bu videoyu izleyip 'ne romantikmiş!' diyeceksin… umarım.",
+  "Diplomayı aldıysan önce bu videoyu izle, sonra ağla!"
+];
+
+function showFloatingMessage() {
+  const message = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+
+  const messageEl = document.createElement('div');
+  messageEl.className = 'floating-message';
+  messageEl.textContent = message;
+
+  // Rastgele pozisyon (ekranın farklı yerlerinde)
+  const positions = [
+    { top: '20%', right: '10%' },
+    { top: '30%', left: '10%' },
+    { top: '50%', right: '15%' },
+    { top: '60%', left: '15%' },
+    { bottom: '25%', right: '10%' },
+    { bottom: '35%', left: '10%' }
+  ];
+
+  const randomPos = positions[Math.floor(Math.random() * positions.length)];
+  Object.assign(messageEl.style, randomPos);
+
+  document.body.appendChild(messageEl);
+
+  // Animasyon ile göster
+  setTimeout(() => messageEl.classList.add('show'), 100);
+
+  // 3 saniye sonra kaldır
+  setTimeout(() => {
+    messageEl.classList.remove('show');
+    setTimeout(() => messageEl.remove(), 500);
+  }, 3000);
+}
+
+// Her 8 saniyede bir rastgele mesaj göster
+setInterval(showFloatingMessage, 8000);
+
+// İlk mesajı 3 saniye sonra göster
+setTimeout(showFloatingMessage, 3000);
+
+    const phoneToggle = document.getElementById("phoneToggle");
+    const phoneInputWrapper = document.getElementById("phoneInputWrapper");
+
+    phoneToggle.addEventListener("change", function() {
+      if (this.checked) {
+        phoneInputWrapper.classList.add("show");
+      } else {
+        phoneInputWrapper.classList.remove("show");
+      }
+    });
+
+  </script>
+</body>
+</html>

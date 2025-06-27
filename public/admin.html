@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Paneli - Geleceğe Video Bırak</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px 0;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo i {
+      font-size: 2.5rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .logo h1 {
+      font-size: 1.8rem;
+      color: #2d3748;
+      font-weight: 700;
+    }
+    
+    .user-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    .stats-card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px 25px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stats-label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .logout-btn {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    
+    .section {
+      background: rgba(255, 255, 255, 0.95);
+      margin-bottom: 40px;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .section-header i {
+      font-size: 1.8rem;
+      color: #667eea;
+    }
+    
+    .section-header h3 {
+      font-size: 1.5rem;
+      color: #2d3748;
+      font-weight: 600;
+    }
+    
+    .search-container {
+      position: relative;
+      margin-bottom: 25px;
+      max-width: 400px;
+    }
+    
+    .search-container i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #667eea;
+      font-size: 1.1rem;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 2px solid #e2e8f0;
+      border-radius: 15px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      min-width: 1000px;
+    }
+    
+    th {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 18px 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    
+    tr:hover {
+      background: #f8fafc;
+      transition: all 0.2s ease;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+      color: white;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(45deg, #4299e1, #3182ce);
+      color: white;
+    }
+    
+    .btn-success {
+      background: linear-gradient(45deg, #48bb78, #38a169);
+      color: white;
+    }
+    
+    .btn-info {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    .btn-warning {
+      background: linear-gradient(45deg, #ed8936, #dd6b20);
+      color: white;
+    }
+    
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    .status-sent {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    
+    .status-pending {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+    
+    .note-cell {
+      max-width: 150px;
+      overflow: hidden;
+    }
+    
+    .note-preview {
+      display: block;
+      max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+      padding: 5px;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .user-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .container {
+        padding: 20px 10px;
+      }
+      
+      .section {
+        margin-bottom: 20px;
+        padding: 20px 15px;
+      }
+      
+      th, td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-video"></i>
+        <h1>Admin Paneli</h1>
+      </div>
+      <div class="user-actions">
+        <div class="stats-card">
+          <div class="stats-number" id="totalVideos">0</div>
+          <div class="stats-label">Toplam Video</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-number" id="totalComments">0</div>
+          <div class="stats-label">Yorum</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-number" id="activeUsers">0</div>
+          <div class="stats-label">Aktif Kullanıcı</div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i>
+          Çıkış Yap
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-dollar-sign"></i>
+        <h3>Fiyat Ayarları</h3>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">0-5 MB (₺)</label>
+          <input type="number" id="price5" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">5-20 MB (₺)</label>
+          <input type="number" id="price20" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">20-50 MB (₺)</label>
+          <input type="number" id="price50" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">50-100 MB (₺)</label>
+          <input type="number" id="price100" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">100-500 MB (₺)</label>
+          <input type="number" id="price500" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">500 MB-1 GB (₺)</label>
+          <input type="number" id="price1024" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 2px solid #e2e8f0;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">1 GB+ (₺)</label>
+          <input type="number" id="priceUstu" class="price-input" min="0" step="1" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <button class="btn btn-success" onclick="updatePrices()" style="padding: 12px 30px; font-size: 16px;">
+          <i class="fas fa-save"></i> Fiyatları Güncelle
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-video"></i>
+        <h3>Video Kayıtları</h3>
+      </div>
+      
+      <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search" class="search-input" placeholder="İsim, e-posta, telefon ara...">
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fas fa-user"></i> İsim Soyisim</th>
+              <th><i class="fas fa-envelope"></i> E-posta</th>
+              <th><i class="fas fa-phone"></i> Telefon</th>
+              <th><i class="fas fa-sticky-note"></i> Not</th>
+              <th><i class="fas fa-calendar"></i> Teslim Tarihi</th>
+              <th><i class="fas fa-hdd"></i> Boyut (MB)</th>
+              <th><i class="fas fa-lira-sign"></i> Ücret (₺)</th>
+              <th><i class="fas fa-clock"></i> Tarih</th>
+              <th><i class="fas fa-video"></i> Video</th>
+              <th><i class="fas fa-envelope-open"></i> Mail</th>
+              <th><i class="fas fa-trash"></i> Sil</th>
+            </tr>
+          </thead>
+          <tbody id="dataBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <i class="fas fa-comments"></i>
+        <h3>Kullanıcı Yorumları</h3>
+      </div>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fas fa-user"></i> İsim</th>
+              <th><i class="fas fa-comment"></i> Yorum</th>
+              <th><i class="fas fa-clock"></i> Tarih</th>
+              <th><i class="fas fa-trash"></i> Sil</th>
+            </tr>
+          </thead>
+          <tbody id="yorumBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="noteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-sticky-note"></i> Not Detayı</h3>
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      if (confirm("Çıkış yapmak istediğinize emin misiniz?")) {
+        fetch("/admin-logout", { method: "POST" }).then(() => {
+          window.location.href = "admin-login.html";
+        }).catch(() => alert("❌ Çıkış yapılamadı."));
+      }
+    }
+
+    let allData = [];
+    let allComments = [];
+    
+    function updateStats() {
+      document.getElementById('totalVideos').textContent = allData.length;
+      document.getElementById('totalComments').textContent = allComments.length;
+    }
+    
+    // Fiyat ayarlarını yükle
+    function loadPrices() {
+      fetch("/fiyat-ayarlari")
+        .then(res => res.json())
+        .then(data => {
+          if (data.mb5 !== undefined) {
+            document.getElementById('price5').value = data.mb5;
+            document.getElementById('price20').value = data.mb20;
+            document.getElementById('price50').value = data.mb50;
+            document.getElementById('price100').value = data.mb100;
+            document.getElementById('price500').value = data.mb500;
+            document.getElementById('price1024').value = data.mb1024;
+            document.getElementById('priceUstu').value = data.mbUstu;
+          }
+        })
+        .catch(err => console.error("Fiyat ayarları yüklenemedi:", err));
+    }
+    
+    // Fiyat ayarlarını güncelle
+    function updatePrices() {
+      const priceData = {
+        mb5: parseInt(document.getElementById('price5').value) || 0,
+        mb20: parseInt(document.getElementById('price20').value) || 0,
+        mb50: parseInt(document.getElementById('price50').value) || 0,
+        mb100: parseInt(document.getElementById('price100').value) || 0,
+        mb500: parseInt(document.getElementById('price500').value) || 0,
+        mb1024: parseInt(document.getElementById('price1024').value) || 0,
+        mbUstu: parseInt(document.getElementById('priceUstu').value) || 0
+      };
+      
+      fetch("/fiyat-ayarlari", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(priceData)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("✅ Fiyat ayarları başarıyla güncellendi!");
+        } else {
+          alert("❌ Fiyat ayarları güncellenemedi!");
+        }
+      })
+      .catch(err => {
+        console.error("Fiyat güncelleme hatası:", err);
+        alert("❌ Bir hata oluştu!");
+      });
+    }
+    
+    // Aktif kullanıcı sayısını getir
+    function loadActiveUsers() {
+      fetch("/aktif-kullanicilar")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('activeUsers').textContent = data.activeUsers;
+        })
+        .catch(err => console.error("Aktif kullanıcı sayısı alınamadı:", err));
+    }
+
+    function fetchData() {
+      fetch("/veriler")
+        .then(res => {
+          if (res.status === 403) {
+            alert("⛔ Oturum süresi dolmuş. Lütfen tekrar giriş yapın.");
+            window.location.href = "admin-login.html";
+            return;
+          }
+          return res.json();
+        })
+        .then(data => {
+          allData = data;
+          displayData(data);
+          updateStats();
+        })
+        .catch(err => console.error("Veri yükleme hatası:", err));
+    }
+
+    function displayData(data) {
+      const tbody = document.getElementById("dataBody");
+      tbody.innerHTML = "";
+      
+      data.forEach(item => {
+        const tr = document.createElement("tr");
+        const notePreview = item.note ? (item.note.length > 30 ? item.note.substring(0, 30) + "..." : item.note) : "Not yok";
+        
+        tr.innerHTML = `
+          <td><strong>${item.fullname}</strong></td>
+          <td>${item.email}</td>
+          <td>${item.phone}</td>
+          <td class="note-cell">
+            <span class="note-preview">${notePreview}</span>
+            ${item.note ? `<button class="btn btn-info" onclick="showNote('${item.timestamp}', '${item.note.replace(/'/g, "\\'")}')"><i class="fas fa-eye"></i></button>` : ''}
+          </td>
+          <td>${item.deliveryDate}</td>
+          <td><span class="status-badge ${parseFloat(item.sizeMB) > 100 ? 'status-pending' : 'status-sent'}">${item.sizeMB}</span></td>
+          <td><strong>₺${item.price}</strong></td>
+          <td>${new Date(item.timestamp).toLocaleDateString("tr-TR")}</td>
+          <td><button class="btn btn-primary" onclick="showVideo('${item.videoFilename}')"><i class="fas fa-play"></i> Göster</button></td>
+          <td>
+            <button class="btn ${item.mailSent ? 'btn-success' : 'btn-warning'}" onclick="sendMail('${item.timestamp}')">
+              <i class="fas fa-envelope"></i> ${item.mailSent ? 'Gönderildi' : 'Gönder'}
+            </button>
+          </td>
+          <td><button class="btn btn-danger" onclick="deleteData('${item.timestamp}')"><i class="fas fa-trash"></i> Sil</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showNote(timestamp, note) {
+      document.getElementById('modalContent').innerHTML = `
+        <div style="padding: 20px; background: #f8fafc; border-radius: 10px; border-left: 4px solid #667eea;">
+          <p style="line-height: 1.6; color: #2d3748;">${note}</p>
+        </div>
+      `;
+      document.getElementById('noteModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('noteModal').style.display = 'none';
+    }
+
+    function deleteData(timestamp) {
+      if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+      
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<div class="loading"></div>';
+      btn.disabled = true;
+      
+      fetch(`/veriler/${timestamp}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      .then(res => res.json())
+      .then(() => {
+        fetchData();
+      })
+      .catch(err => {
+        console.error("Silme hatası:", err);
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      });
+    }
+
+    function showVideo(filename) {
+      if (!filename) return alert("Video dosyası bulunamadı.");
+      const url = filename.startsWith("http") ? filename : `/uploads/${filename}`;
+      window.open(url, "_blank");
+    }
+
+    function sendMail(timestamp) {
+      if (!confirm("Bu kişiye manuel olarak e-posta göndermek istiyor musunuz?")) return;
+      
+      const btn = event.target.closest('button');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<div class="loading"></div>';
+      btn.disabled = true;
+      
+      fetch("/manuel-mail-gonder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timestamp })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("✅ Mail gönderildi.");
+          fetchData();
+        } else {
+          alert("❌ Gönderim hatası.");
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }
+      })
+      .catch(err => {
+        console.error("❌ İstek hatası:", err);
+        alert("Sunucu hatası.");
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      });
+    }
+
+    document.getElementById("search").addEventListener("input", function () {
+      const keyword = this.value.toLowerCase();
+      const filtered = allData.filter(item =>
+        item.fullname.toLowerCase().includes(keyword) ||
+        item.email.toLowerCase().includes(keyword) ||
+        item.phone.toLowerCase().includes(keyword)
+      );
+      displayData(filtered);
+    });
+
+    function fetchYorumlar() {
+      fetch("/yorumlar")
+        .then(res => res.json())
+        .then(data => {
+          allComments = data;
+          const tbody = document.getElementById("yorumBody");
+          tbody.innerHTML = "";
+          data.reverse().forEach(y => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><strong>${y.showName ? y.name : "Anonim"}</strong></td>
+              <td style="max-width: 300px; word-wrap: break-word;">${y.comment}</td>
+              <td>${new Date(y.timestamp).toLocaleDateString("tr-TR")}</td>
+              <td><button class="btn btn-danger" onclick="deleteYorum('${y.timestamp}')"><i class="fas fa-trash"></i> Sil</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+          updateStats();
+        })
+        .catch(err => console.error("Yorum yükleme hatası:", err));
+    }
+
+    function deleteYorum(timestamp) {
+      if (!confirm("Bu yorumu silmek istediğinize emin misiniz?")) return;
+      
+      fetch(`/yorumlar/${timestamp}`, {
+        method: "DELETE"
+      })
+      .then(res => res.json())
+      .then(() => fetchYorumlar())
+      .catch(err => console.error("Yorum silme hatası:", err));
+    }
+
+    // Modal dışına tıklandığında kapat
+    window.onclick = function(event) {
+      const modal = document.getElementById('noteModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+
+    // Sayfa yüklendiğinde verileri getir
+    fetchData();
+    fetchYorumlar();
+    loadPrices();
+    loadActiveUsers();
+    
+    // Her 30 saniyede bir otomatik yenile
+    setInterval(() => {
+      fetchData();
+      fetchYorumlar();
+      loadActiveUsers();
+    }, 30000);
+  </script>
+</body>
+</html>
